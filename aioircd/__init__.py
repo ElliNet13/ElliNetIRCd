@@ -1,8 +1,11 @@
 import contextvars
 import logging
-import pkg_resources
+from importlib.metadata import version, PackageNotFoundError
 
-__version__ = pkg_resources.require('aioircd')[0].version
+try:
+    __version__ = version("aioircd")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 from aioircd.config import config as cfg
 logger = logging.getLogger(__package__)
