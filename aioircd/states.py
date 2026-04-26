@@ -63,6 +63,23 @@ class UserState(metaclass=abc.ABCMeta):
         pass  # ignored
 
     @command
+    async def CAP(self, subcommand, *params):
+        host = aioircd.servlocal.get().host
+        subcommand = subcommand.upper()
+
+        if subcommand == 'LS':
+            await self.user.send(f":{host} CAP * LS :")
+        elif subcommand == 'LIST':
+            await self.user.send(f":{host} CAP * LIST :")
+        elif subcommand == 'REQ':
+            requested = ' '.join(params)
+            await self.user.send(f":{host} CAP * NAK {requested}")
+        elif subcommand == 'END':
+            await self.user.send(f":{host} CAP * END")
+        else:
+            raise ErrUnknownError(self.user, "CAP", f"Unknown CAP subcommand {subcommand}.")
+
+    @command
     async def USER(self, username, _zero, _star, realname):
         raise ErrUnknownError(self.user, "USER", "Called while in the wrong state.")
 

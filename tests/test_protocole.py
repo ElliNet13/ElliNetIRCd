@@ -79,9 +79,8 @@ class TestTour(AsyncTestCase, TestIRC):
         bob = await self.connect_user()
         self.assertIsInstance(bob.state, ConnectedState)
 
-        with self.assertLogs('aioircd.user', 'WARNING'):
-            await bob.usend("CAP LS 302")
-            self.assertRegex(await bob.urecv(), r":ip6-localhost 400 \[::1\]:\d+ - :Command CAP is unknown\.\r\n")
+        await bob.usend("CAP LS 302")
+        self.assertEqual(await bob.urecv(), ":ip6-localhost CAP * LS :\r\n")
 
 
         self.assertIsInstance(bob.state, ConnectedState)
