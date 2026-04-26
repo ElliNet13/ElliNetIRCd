@@ -35,6 +35,44 @@ class TestProtocole(AsyncTestCase, TestIRC):
 
 
 class TestTour(AsyncTestCase, TestIRC):
+     async def atest_who_and_whois(self, nursery):
+        await self.start_server(nursery)
+
+        bob = await self.connect_user()
+        await self.register(bob, 'whoisbob')
+
+        eve = await self.connect_user()
+        await self.register(eve, 'whoiseve')
+
+        await bob.usend('JOIN #whoischan')
+        self.assertEqual(await bob.urecv(), textwrap.dedent('''\
+            :whoisbob JOIN #whoischan\r
+            :ip6-localhost 353 whoisbob = #whoischan :whoisbob\r
+            :ip6-localhost 366 whoisbob #whoischan :End of /NAMES list.\r
+            '''))
+
+        await eve.usend('JOIN #whoischan')
+        self.assertEqual(await eve.urecv(), textwrap.dedent('''\
+            :whoiseve JOIN #whoischan\r
+            :ip6-localhost 353 whoiseve = #whoischan :whoisbob whoiseve\r
+            :ip6-localhost 366 whoiseve #whoischan :End of /NAMES list.\r
+            '''))
+        self.assertEqual(await bob.urecv(), ':whoiseve JOIN #whoischan\r\n')
+
+        await bob.usend('WHO #whoischan')
+        who_reply = await bob.urecv()
+        self.assertIn(':ip6-localhost 352 whoisbob #whoischan ~whoisbob ::1 ip6-localhost whoisbob H :0 John Doe\r\n', who_reply)
+        self.assertIn(':ip6-localhost 352 whoisbob #whoischan ~whoiseve ::1 ip6-localhost whoiseve H :0 John Doe\r\n', who_reply)
+        self.assertTrue(who_reply.endswith(':ip6-localhost 315 whoisbob #whoischan :End of /WHO list.\r\n'))
+
+        await bob.usend('WHOIS whoiseve')
+        self.assertEqual(await bob.urecv(), textwrap.dedent('''\
+            :ip6-localhost 311 whoisbob whoiseve ~whoiseve ::1 ip6-localhost :John Doe\r
+            :ip6-localhost 312 whoisbob whoiseve ip6-localhost :aioircd\r
+            :ip6-localhost 319 whoisbob whoiseve :#whoischan\r
+            :ip6-localhost 318 whoisbob whoiseve :End of /WHOIS list.\r
+            '''))
+
      async def atest_tour(self, nursery):
         await self.start_server(nursery)
 

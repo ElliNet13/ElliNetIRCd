@@ -127,7 +127,7 @@ class TestIRC(unittest.TestCase):
         if realname is None:
             realname = f'John Doe'
 
-        messages = [f"NICK {nickname}", "USER {username} 0 * :{realname}"]
+        messages = [f"NICK {nickname}", f"USER {username} 0 * :{realname}"]
         if cfg.PASS:
             messages.insert(0, f"PASS {cfg.PASS}")
 
