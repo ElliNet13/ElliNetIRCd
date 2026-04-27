@@ -3,7 +3,7 @@ import trio
 from functools import partial
 from typing import List, Set, Union
 
-import aioircd
+import ellinetircd
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class Channel:
                 the channel name.
         """
         self._name = name
-        self.users: Set["aioircd.user.User"] = set()
+        self.users: Set["ellinetircd.user.User"] = set()
 
     def __str__(self) -> str:
         """
@@ -56,12 +56,12 @@ class Channel:
             A list of messages send to the client.
         """
         for message in messages:
-            logger.log(aioircd.IO, "send to %s: %s", self, message)
+            logger.log(ellinetircd.IO, "send to %s: %s", self, message)
 
     async def send(
         self,
         messages: Union[str, List[str]],
-        skipusers: Set["aioircd.user.User"] = set(),
+        skipusers: Set["ellinetircd.user.User"] = set(),
     ) -> None:
         """"
         Send many messages to each user subscribed to this channel.

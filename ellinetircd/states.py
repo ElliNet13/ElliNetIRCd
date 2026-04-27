@@ -12,9 +12,9 @@ import textwrap
 import trio
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
 
-import aioircd
-from aioircd.channel import Channel
-from aioircd.exceptions import *
+import ellinetircd
+from ellinetircd.channel import Channel
+from ellinetircd.exceptions import *
 
 FuncType = TypeVar('FuncType', bound=Callable[..., Any])
 
@@ -31,7 +31,7 @@ def command(func: FuncType) -> FuncType:
 
 
 class UserState(metaclass=abc.ABCMeta):
-    def __init__(self, user: "aioircd.user.User") -> None:
+    def __init__(self, user: "ellinetircd.user.User") -> None:
         logger.debug("state of user %s changed: %s -> %s", user, user.state, self)
         self.user = user
 
@@ -58,7 +58,7 @@ class UserState(metaclass=abc.ABCMeta):
 
     @command
     async def PING(self, token: str) -> None:
-        host = aioircd.servlocal.get().host
+        host = ellinetircd.servlocal.get().host
         await self.user.send(f":{host} PONG {host} {token}", log=logger.isEnabledFor(logging.DEBUG))
 
     @command
@@ -112,7 +112,7 @@ class UserState(metaclass=abc.ABCMeta):
 
     @command
     async def QUIT(self, reason: str = "", *, kick: bool = False) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         if not kick:
             reason = 'Quit: ' + reason
         for chan in self.user.channels:
@@ -127,9 +127,9 @@ class UserState(metaclass=abc.ABCMeta):
 class PasswordState(UserState):
     @command
     async def PASS(self, password: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         if password != servlocal.pwd:
-            logger.log(aioircd.SECURITY, "Invalid password for %s", self.user)
+            logger.log(ellinetircd.SECURITY, "Invalid password for %s", self.user)
             raise ErrPasswdMismatch()
 
         self.user.state = ConnectedState(self.user)
@@ -149,7 +149,7 @@ class ConnectedState(UserState):
 
     @command
     async def CAP(self, subcommand: str, *params: str) -> None:
-        host = aioircd.servlocal.get().host
+        host = ellinetircd.servlocal.get().host
         subcommand = subcommand.upper()
         self.cap_started = True
 
@@ -199,13 +199,13 @@ class ConnectedState(UserState):
 
     @command
     async def NICK(self, nickname: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         if nickname in servlocal.users:
             raise ErrNicknameInUse(nickname)
         if not nick_re.match(nickname):
             raise ErrErroneusNickname(nickname)
         if not self.user.can_use_nick(nickname):
-            logger.log(aioircd.SECURITY, '%s tried to use nick %s', self.user, nickname)
+            logger.log(ellinetircd.SECURITY, '%s tried to use nick %s', self.user, nickname)
             raise ErrErroneusNickname(nickname)
 
         self.user.nick = nickname
@@ -214,9 +214,9 @@ class ConnectedState(UserState):
             await self.register()
 
     async def register(self) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         self.user.state = RegisteredState(self.user)
-        aioircd.update_status()
+        ellinetircd.update_status()
         await self.user.send(textwrap.dedent("""\
             :{host} 001 {nick} :Welcome to the Internet Relay Network {nick}
             :{host} 002 {nick} :Your host is {host}, running version {version}
@@ -227,13 +227,13 @@ class ConnectedState(UserState):
             :{host} 422 {nick} :MOTD File is missing""".format(
                 host=servlocal.host,
                 nick=self.user.nick,
-                version=aioircd.__version__,
+                version=ellinetircd.__version__,
                 # RPL_MYINFO (004), advertise availables modes (none)
                 usermodes="",
                 chanmodes="",
                 # RPL_ISUPPORT (005), advertise server capabilities (not much)
-                cap1 = "AWAYLEN=0 CASEMAPPING=ascii CHANTYPES=# NICKLEN=15 CHANNELLEN=50 CHANMODES=beI,k,l,imnpst ELIST=U",
-                cap2 = "HOSTLEN=63 KICKLEN=0 MAXTARGETS=12 MODES=4 STATUSMSG=@+ TOPICLEN=0 USERLEN=15",
+                cap1 = "AWAYLEN=0 CASEMAPPING=ascii CHANLIMIT=#: CHANMODES= CHANNELLEN=50 CHANTYPES=# ELIST=",
+                cap2 = "HOSTLEN=63 KICKLEN=0 MAXLIST= MAXTARGETS=12 MODES=0 NICKLEN=15 STATUSMSG= TOPICLEN=0 USERLEN=15",
             )
         ).split('\n'))
 
@@ -253,7 +253,7 @@ class RegisteredState(UserState):
 
     @command
     async def NICK(self, nickname: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
 
         if nickname in servlocal.users:
             raise ErrNicknameInUse(nickname)
@@ -269,7 +269,7 @@ class RegisteredState(UserState):
 
     @command
     async def JOIN(self, channels: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
 
         for channel in channels.split(','):
             if not chan_re.match(channel):
@@ -281,7 +281,7 @@ class RegisteredState(UserState):
             if not chan:
                 chan = Channel(channel)
                 servlocal.channels[chan.name] = chan
-                aioircd.update_status()
+                ellinetircd.update_status()
             chan.users.add(self.user)
             self.user.channels.add(chan)
 
@@ -293,7 +293,7 @@ class RegisteredState(UserState):
 
     @command
     async def PART(self, channels: str, reason: Optional[str] = None) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
 
         for channel in channels.split(','):
             chan = servlocal.channels.get(channel)
@@ -309,7 +309,7 @@ class RegisteredState(UserState):
             chan.users.remove(self.user)
             if not chan.users:
                 servlocal.channels.pop(chan.name)
-                aioircd.update_status()
+                ellinetircd.update_status()
 
             if reason:
                 await chan.send(f":{self.user.nick} PART {channel} :{reason}")
@@ -318,7 +318,7 @@ class RegisteredState(UserState):
 
     @command
     async def NAMES(self, channel: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         chan = servlocal.channels.get(channel)
         host = servlocal.host
         nick = self.user.nick
@@ -329,7 +329,7 @@ class RegisteredState(UserState):
                 # merged all users in a str and split it by MAXLINELEN chunks
                 for some_users in textwrap.wrap(
                     ' '.join(sorted(user.nick for user in chan.users)),
-                    width=aioircd.MAXLINELEN - len(host) - len(nick) - len(channel) - 13
+                    width=ellinetircd.MAXLINELEN - len(host) - len(nick) - len(channel) - 13
                 )
             ])
 
@@ -337,7 +337,7 @@ class RegisteredState(UserState):
             
     @command
     async def LIST(self) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         host = servlocal.host
         nick = self.user.nick
 
@@ -352,7 +352,7 @@ class RegisteredState(UserState):
 
     @command
     async def PRIVMSG(self, targets: str, text: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
 
         for target in targets.split(','):
             chan_or_user = (
@@ -372,11 +372,11 @@ class RegisteredState(UserState):
 
     @command
     async def WHO(self, target: str = "*") -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         host = servlocal.host
         requester = self.user.nick
     
-        def match(user: "aioircd.user.User", target: str) -> bool:
+        def match(user: "ellinetircd.user.User", target: str) -> bool:
             if target == "*" or target == "":
                 return True
             if target.startswith("#"):
@@ -417,7 +417,7 @@ class RegisteredState(UserState):
 
     @command
     async def WHOIS(self, target: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         host = servlocal.host
         requester = self.user.nick
 
@@ -444,7 +444,7 @@ class RegisteredState(UserState):
 
     @command
     async def MODE(self, target: Optional[str] = None, *params: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         host = servlocal.host
         nick = self.user.nick
 
@@ -479,10 +479,10 @@ class RegisteredState(UserState):
 
 class QuitState(UserState):
     """ The user sent the QUIT command, no more message should be processed """
-    def __init__(self, user: "aioircd.user.User") -> None:
+    def __init__(self, user: "ellinetircd.user.User") -> None:
         super().__init__(user)
         user.nick = None
-        aioircd.update_status()
+        ellinetircd.update_status()
 
     @command
     async def PING(self, server1: Optional[str] = None, server2: Optional[str] = None) -> None:

@@ -7,7 +7,7 @@ try:
 except PackageNotFoundError:
     __version__ = "unknown"
 
-from aioircd.config import config as cfg
+from ellinetircd.config import config as cfg
 logger = logging.getLogger(__package__)
 IO = logging.INFO - 5
 SECURITY = logging.ERROR + 5
@@ -17,17 +17,17 @@ logger.setLevel(cfg.LOGLEVEL)
 servlocal = contextvars.ContextVar('servlocal')
 MAXLINELEN = 512
 
-import aioircd.channel
-import aioircd.exceptions
-import aioircd.server
-import aioircd.sdnotify
-import aioircd.states
-import aioircd.user
+import ellinetircd.channel
+import ellinetircd.exceptions
+import ellinetircd.server
+import ellinetircd.sdnotify
+import ellinetircd.states
+import ellinetircd.user
 
 
 def update_status() -> None:
     sl = servlocal.get()
-    aioircd.sdnotify.status(
+    ellinetircd.sdnotify.status(
         f"Listening on {cfg.ADDR} ({cfg.HOST}) port {cfg.PORT}. "
         f"Currently {len(sl.users)} registered users"
         f" in {len(sl.channels)} channels."

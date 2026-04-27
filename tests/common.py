@@ -8,10 +8,10 @@ import unittest
 import trio
 import trio.testing
 
-import aioircd
-from aioircd.config import config as cfg
-from aioircd.server import Server, ServLocal
-from aioircd.states import ConnectedState, RegisteredState
+import ellinetircd
+from ellinetircd.config import config as cfg
+from ellinetircd.server import Server, ServLocal
+from ellinetircd.states import ConnectedState, RegisteredState
 
 
 _latin_alpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -23,7 +23,7 @@ def _unique_id_gen(alphabet=_latin_alpha, base_length=1) -> Iterator:
 newid = functools.partial(next, _unique_id_gen())
 
 
-RealUser = aioircd.user.User
+RealUser = ellinetircd.user.User
 DEFAULT_CONFIG = {
     'HOST': 'ip6-localhost',
     'ADDR': '::1',
@@ -36,7 +36,7 @@ DEFAULT_CONFIG = {
 
 
 _users = []
-class FakeUser(aioircd.user.User):
+class FakeUser(ellinetircd.user.User):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._test_stream = None
@@ -92,14 +92,14 @@ class TestIRC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        aioircd.user.User = aioircd.server.User = FakeUser
+        ellinetircd.user.User = ellinetircd.server.User = FakeUser
         cfg.__dict__.update(dict(DEFAULT_CONFIG, **cls.config))
         cls._server = Server(cfg.HOST, cfg.ADDR, cfg.PORT, cfg.PASS)
         cls._servlocal = ServLocal(cfg.HOST, cfg.PASS, {}, {})
 
     @classmethod
     def tearDownClass(cls) -> None:
-        aioircd.user.User = aioircd.server.User = RealUser
+        ellinetircd.user.User = ellinetircd.server.User = RealUser
 
     def setUp(self) -> None:
         self._users = _users
@@ -110,7 +110,7 @@ class TestIRC(unittest.TestCase):
             trio.run(user._test_stream.aclose)
 
     async def start_server(self, nursery) -> None:
-        aioircd.servlocal.set(self._servlocal)
+        ellinetircd.servlocal.set(self._servlocal)
         self._listeners = await nursery.start(functools.partial(
             trio.serve_tcp, self._server.handle, 0, host=self._server.addr))
 

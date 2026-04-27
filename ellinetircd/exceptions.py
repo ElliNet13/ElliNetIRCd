@@ -5,7 +5,7 @@ __ALL__ = [
     'ErrNoLogin', 'ErrNeedMoreParams', 'ErrAlreadyRegistred',
 ]
 
-import aioircd
+import ellinetircd
 from typing import Any
 
 class Disconnect(Exception):
@@ -23,7 +23,7 @@ class IRCException(Exception):
     @classmethod
     def format(cls, *args: Any) -> str:
         return ":{host} {code} {error}".format(
-            host=aioircd.servlocal.get().host,
+            host=ellinetircd.servlocal.get().host,
             code=cls.code,
             error=cls.msg.format(*args),
         )

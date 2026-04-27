@@ -5,13 +5,13 @@ import trio
 import uuid
 from typing import List, Optional, Set, Tuple, Union
 
-import aioircd
-from aioircd.config import config as cfg
-from aioircd.exceptions import IRCException, Disconnect
-from aioircd.states import PasswordState, ConnectedState, QuitState
+import ellinetircd
+from ellinetircd.config import config as cfg
+from ellinetircd.exceptions import IRCException, Disconnect
+from ellinetircd.states import PasswordState, ConnectedState, QuitState
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('aioircd.user')
 
 message_re = re.compile(r"""
     (?P<command>[A-Z]+)
@@ -41,7 +41,7 @@ _safenets = [
 
 class User:
     def __init__(self, stream: trio.abc.Stream, nursery: trio.Nursery) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         self.stream = stream
         self._nursery = nursery
         self._nick: Optional[str] = None
@@ -80,7 +80,7 @@ class User:
 
     @nick.setter
     def nick(self, nick: str) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         servlocal.users[nick] = servlocal.users.pop(self._nick, self)
         self._nick = nick
 
@@ -120,7 +120,7 @@ class User:
             self._ping_timer.deadline = trio.current_time() + (cfg.TIMEOUT - cfg.PING_TIMEOUT)
             with trio.move_on_after(cfg.TIMEOUT) as cs:
                 try:
-                    chunk = await self.stream.receive_some(aioircd.MAXLINELEN)
+                    chunk = await self.stream.receive_some(ellinetircd.MAXLINELEN)
                 except Exception as exc:
                     raise Disconnect("Network failure") from exc
             if cs.cancelled_caught:
@@ -131,7 +131,7 @@ class User:
             # Split the buffer into as many IRC messages as possible,
             # ensure each message has a length of maximum MAXLINELEN
             *messages, buffer = (buffer + chunk).split(b'\r\n')
-            if any(len(m) > aioircd.MAXLINELEN - 2 for m in messages + [buffer]):
+            if any(len(m) > ellinetircd.MAXLINELEN - 2 for m in messages + [buffer]):
                 raise Disconnect("Payload too long")
 
             for message in (m for m in messages if m):
@@ -139,7 +139,7 @@ class User:
                 # log in DEBUG
                 if not (message.startswith(b'PING') or message.startswith(b'PONG')
                    ) or logger.isEnabledFor(logging.DEBUG):
-                    logger.log(aioircd.IO, "recv from %s: %s", self, message)
+                    logger.log(ellinetircd.IO, "recv from %s: %s", self, message)
 
                 # Parse the message
                 try:
@@ -186,7 +186,7 @@ class User:
         self,
         messages: Union[str, List[str]],
         log: bool = True,
-        skipusers: Optional[Set["aioircd.user.User"]] = None,
+        skipusers: Optional[Set["ellinetircd.user.User"]] = None,
     ) -> None:
         """ Send many messages to the user. """
         if isinstance(messages, str):
@@ -195,5 +195,5 @@ class User:
         async with self._send_lock:
             if log:
                 for msg in messages:
-                    logger.log(aioircd.IO, "send to %s: %s", self, msg)
+                    logger.log(ellinetircd.IO, "send to %s: %s", self, msg)
             await self.stream.send_all(b"".join(f"{msg}\r\n".encode() for msg in messages))

@@ -4,10 +4,10 @@ import signal
 import trio
 from typing import Any, Dict, Optional
 
-import aioircd
-from aioircd import sdnotify
-from aioircd.exceptions import Disconnect
-from aioircd.user import User
+import ellinetircd
+from ellinetircd import sdnotify
+from ellinetircd.exceptions import Disconnect
+from ellinetircd.user import User
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class Server:
         self.pwd = pwd
 
     async def handle(self, stream: trio.abc.Stream) -> None:
-        servlocal = aioircd.servlocal.get()
+        servlocal = ellinetircd.servlocal.get()
         async with trio.open_nursery() as nursery:
             user = User(stream, nursery)
             logger.info("Connection with %s established.", user)
@@ -41,7 +41,7 @@ class Server:
 
     def started(self, _listeners: Any) -> None:
         sdnotify.ready()
-        aioircd.update_status()
+        ellinetircd.update_status()
 
     async def _onterm(self) -> None:
         with trio.open_signal_receiver(signal.SIGTERM, signal.SIGINT) as signal_aiter:
@@ -53,7 +53,7 @@ class Server:
                 self._nursery.cancel_scope.cancel()
 
     async def serve(self) -> None:
-        aioircd.servlocal.set(ServLocal(self.host, self.pwd, {}, {}))
+        ellinetircd.servlocal.set(ServLocal(self.host, self.pwd, {}, {}))
         async with trio.open_nursery() as self._nursery:
             self._nursery.start_soon(self._onterm)
             logger.info("Listening on %s port %s.", self.addr, self.port)
@@ -65,7 +65,7 @@ class ServLocal:
     host: str
     pwd: str  # password, "pass" is a reserved keyword
     users: Dict[str, User]
-    channels: Dict[str, "aioircd.channel.Channel"]
+    channels: Dict[str, "ellinetircd.channel.Channel"]
 
     def __repr__(self) -> str:
         return (

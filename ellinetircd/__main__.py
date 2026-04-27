@@ -6,9 +6,9 @@ import textwrap
 import trio
 from socket import gethostname, gethostbyname
 
-import aioircd
-from aioircd.config import config as cfg
-from aioircd.server import Server
+import ellinetircd
+from ellinetircd.config import config as cfg
+from ellinetircd.server import Server
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class ColoredFormatter(logging.Formatter):
     colors = {
         logging.DEBUG: (34, 49),  # blue
-        aioircd.IO: (37, 49),  # white
+        ellinetircd.IO: (37, 49),  # white
         logging.INFO: (32, 49),  # green
         logging.WARNING: (33, 49),  # yellow
         logging.ERROR: (31, 49),  # red
-        aioircd.SECURITY: (31, 49),  # red
+        ellinetircd.SECURITY: (31, 49),  # red
         logging.CRITICAL: (37, 41),  # white fg, red bg
     }
     def format(self, record: logging.LogRecord) -> str:
@@ -50,8 +50,8 @@ def main() -> None:
 
 # Dummy argparse, used only for --help and --version
 parser = argparse.ArgumentParser(
-    prog=aioircd.__name__,
-    usage=f"{sys.executable} -m {aioircd.__name__}",
+    prog=ellinetircd.__name__,
+    usage=f"{sys.executable} -m {ellinetircd.__name__}",
     description="single-server minimalist IRC",
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog=textwrap.dedent(f"""\
@@ -68,7 +68,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     '-V', '--version',
     action='version',
-    version=f'{aioircd.__name__} {aioircd.__version__}',
+    version=f'{ellinetircd.__name__} {ellinetircd.__version__}',
 )
 parser.parse_args()
 
