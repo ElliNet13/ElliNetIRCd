@@ -1,5 +1,4 @@
 async-generator==1.10
-attrs==21.2.0
 idna==3.3
 outcome==1.1.0
 sniffio==1.2.0
