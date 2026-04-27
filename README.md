@@ -1,7 +1,7 @@
 aioircd
 =======
 
-A minimalist python asynchronous IRC server built on top of
+A python asynchronous IRC server built on top of
 [Trio](https://github.com/python-trio/trio).
 
 ### Installation and Usage
