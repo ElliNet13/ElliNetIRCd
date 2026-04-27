@@ -2,7 +2,7 @@ name: Package and Publish
 
 on:
   push:
-    branches: master
+    branches: ["master"]
 
 jobs:
   release-please:
@@ -46,9 +46,9 @@ jobs:
       # unittests are included in this distribution. We use those packaged tests
       # to test the build.
       run: |
-        mkdir aioircd-sdist
-        tar -xf dist/*.tar.gz -C aioircd-sdist
-        cd aioircd-sdist/*/
+        mkdir ellinetircd-sdist
+        tar -xf dist/*.tar.gz -C ellinetircd-sdist
+        cd ellinetircd-sdist/*/
         python -m venv venv-sdist
         venv-sdist/bin/pip install -e .
         venv-sdist/bin/python -m unittest

@@ -11,7 +11,7 @@ from ellinetircd.exceptions import IRCException, Disconnect
 from ellinetircd.states import PasswordState, ConnectedState, QuitState
 
 
-logger = logging.getLogger('aioircd.user')
+logger = logging.getLogger('ellinetircd.user')
 
 message_re = re.compile(r"""
     (?P<command>[A-Z]+)

@@ -20,7 +20,7 @@ class TestProtocole(AsyncTestCase, TestIRC):
 
         eve = await self.connect_user()
 
-        with self.assertLogs('aioircd.user', 'WARNING'):
+        with self.assertLogs('ellinetircd.user', 'WARNING'):
             await eve.usend("NICK bob")
             self.assertIn("Nickname is already in use", await eve.urecv())
         await eve.usend("QUIT")
@@ -68,7 +68,7 @@ class TestTour(AsyncTestCase, TestIRC):
         await bob.usend('WHOIS whoiseve')
         self.assertEqual(await bob.urecv(), textwrap.dedent('''\
             :ip6-localhost 311 whoisbob whoiseve ~whoiseve ::1 ip6-localhost :John Doe\r
-            :ip6-localhost 312 whoisbob whoiseve ip6-localhost :aioircd\r
+            :ip6-localhost 312 whoisbob whoiseve ip6-localhost :ellinetircd\r
             :ip6-localhost 319 whoisbob whoiseve :#whoischan\r
             :ip6-localhost 318 whoisbob whoiseve :End of /WHOIS list.\r
             '''))
@@ -93,7 +93,7 @@ class TestTour(AsyncTestCase, TestIRC):
             :ip6-localhost 001 bob :Welcome to the Internet Relay Network bob\r
             :ip6-localhost 002 bob :Your host is ip6-localhost, running version {ellinetircd.__version__}\r
             :ip6-localhost 003 bob :The server was created someday\r
-            :ip6-localhost 004 bob aioircd {ellinetircd.__version__}  \r
+            :ip6-localhost 004 bob ellinetircd {ellinetircd.__version__}  \r
             :ip6-localhost 005 bob AWAYLEN=0 CASEMAPPING=ascii CHANLIMIT=#: CHANMODES= CHANNELLEN=50 CHANTYPES=# ELIST= :are supported by this server\r
             :ip6-localhost 005 bob HOSTLEN=63 KICKLEN=0 MAXLIST= MAXTARGETS=12 MODES=0 NICKLEN=15 STATUSMSG= TOPICLEN=0 USERLEN=15 :are supported by this server\r
             :ip6-localhost 422 bob :MOTD File is missing\r

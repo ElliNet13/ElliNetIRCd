@@ -221,7 +221,7 @@ class ConnectedState(UserState):
             :{host} 001 {nick} :Welcome to the Internet Relay Network {nick}
             :{host} 002 {nick} :Your host is {host}, running version {version}
             :{host} 003 {nick} :The server was created someday
-            :{host} 004 {nick} aioircd {version} {usermodes} {chanmodes}
+            :{host} 004 {nick} ellinetircd {version} {usermodes} {chanmodes}
             :{host} 005 {nick} {cap1} :are supported by this server
             :{host} 005 {nick} {cap2} :are supported by this server
             :{host} 422 {nick} :MOTD File is missing""".format(
@@ -429,7 +429,7 @@ class RegisteredState(UserState):
             f":{host} 311 {requester} {target} ~{user.nick} {user.host} {host} :{user.realname}"
         )
         await self.user.send(
-            f":{host} 312 {requester} {target} {host} :aioircd"
+            f":{host} 312 {requester} {target} {host} :ellinetircd"
         )
 
         channels = ' '.join(sorted(chan.name for chan in user.channels))

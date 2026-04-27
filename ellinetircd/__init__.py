@@ -3,7 +3,7 @@ import logging
 from importlib.metadata import version, PackageNotFoundError
 
 try:
-    __version__ = version("aioircd")
+    __version__ = version("ellinetircd")
 except PackageNotFoundError:
     __version__ = "unknown"
 
