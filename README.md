@@ -1,4 +1,4 @@
-ellinetircd
+ElliNetIRCd
 =======
 
 A python asynchronous IRC server based on aioirc.
