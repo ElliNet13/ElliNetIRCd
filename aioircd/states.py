@@ -67,13 +67,32 @@ class UserState(metaclass=abc.ABCMeta):
         host = aioircd.servlocal.get().host
         subcommand = subcommand.upper()
 
+        CAPS = [
+            "away-notify",
+            "cap-notify",
+            "multi-prefix",
+            "chghost",
+        ]
+        caps = " ".join(CAPS)
+
         if subcommand == 'LS':
-            await self.user.send(f":{host} CAP * LS :")
+            await self.user.send(f":{host} CAP * LS :{caps}")
         elif subcommand == 'LIST':
-            await self.user.send(f":{host} CAP * LIST :")
+            await self.user.send(f":{host} CAP * LIST :{caps}")
         elif subcommand == 'REQ':
-            requested = ' '.join(params)
-            await self.user.send(f":{host} CAP * NAK {requested}")
+            requested = set(params)
+
+            supported = CAPS
+            unknown = requested - supported
+
+            if unknown:
+                await self.user.send(
+                    f":{host} CAP * NAK :{' '.join(unknown)}"
+                )
+            else:
+                await self.user.send(
+                    f":{host} CAP * ACK :{' '.join(requested)}"
+                )
         elif subcommand == 'END':
             await self.user.send(f":{host} CAP * END")
         else:

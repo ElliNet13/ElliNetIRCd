@@ -80,7 +80,7 @@ class TestTour(AsyncTestCase, TestIRC):
         self.assertIsInstance(bob.state, ConnectedState)
 
         await bob.usend("CAP LS 302")
-        self.assertEqual(await bob.urecv(), ":ip6-localhost CAP * LS :\r\n")
+        self.assertEqual(await bob.urecv(), ":ip6-localhost CAP * LS :away-notify cap-notify multi-prefix chghost\r\n")
 
 
         self.assertIsInstance(bob.state, ConnectedState)
