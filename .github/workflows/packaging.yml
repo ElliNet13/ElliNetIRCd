@@ -12,11 +12,14 @@ jobs:
       released: ${{ steps.release.outputs.release_created }}
       tag: ${{ steps.release.outputs.tag_name }}
 
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
     - uses: GoogleCloudPlatform/release-please-action@v2
       id: release
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
         release-type: simple
         default-branch: master
         changelog-types: '[{"type": "feat", "section": "New Features"}, {"type": "imp", "section": "Improvements"}, {"type": "ref", "section": "Refactors"}, {"type": "fix", "section": "Bug Fixes"}, {"type": "rev", "section": "Reverts"}, {"type": "doc", "section": "Documentation"}, {"type": "misc", "section": "Miscellaneous"}]'
@@ -44,7 +47,7 @@ jobs:
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: 3.14.3
     
     - name: Setup
       run: |
