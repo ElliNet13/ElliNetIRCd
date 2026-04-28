@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/ElliNet13/ElliNetIRCd/compare/v1.0.1...v1.0.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* Replace placeholder author email in setup.cfg ([c094552](https://github.com/ElliNet13/ElliNetIRCd/commit/c09455233fb7c22fb2b8191a05ccbfbc6892b4a3))
+* Some clients crash while parsing ISUPPORT if there is a key with no value ([e411731](https://github.com/ElliNet13/ElliNetIRCd/commit/e41173112d7dc69b96939ead0d6212931c5b269c))
+
 ### [1.0.1](https://www.github.com/ElliNet13/ElliNetIRCd/compare/v1.0.0...v1.0.1) (2026-04-28)
 
 
