@@ -1,5 +1,23 @@
 # Changelog
 
+### [1.0.1](https://www.github.com/ElliNet13/ElliNetIRCd/compare/v1.0.0...v1.0.1) (2026-04-28)
+
+
+### Documentation
+
+* Add casing to README name ([4026ecf](https://www.github.com/ElliNet13/ElliNetIRCd/commit/4026ecf38621bff4b7c8fb8aab8e76eccc3aaa66))
+
+
+### Miscellaneous
+
+* Add package auto updates ([b056b73](https://www.github.com/ElliNet13/ElliNetIRCd/commit/b056b7326e5496b0e0864966ed25a84472b36794))
+
+
+### Dependencies
+
+* **deps:** update dependency idna to v3.13 ([#5](https://www.github.com/ElliNet13/ElliNetIRCd/issues/5)) ([d05a15d](https://www.github.com/ElliNet13/ElliNetIRCd/commit/d05a15d4e59f12a483c719c60a9ae8c437e539e6))
+* **deps:** update dependency python to v3.14.4 ([#4](https://www.github.com/ElliNet13/ElliNetIRCd/issues/4)) ([19f926d](https://www.github.com/ElliNet13/ElliNetIRCd/commit/19f926dd475fba54fcb79f2efc87bd5af874412c))
+
 ## 1.0.0 (2026-04-27)
 
 
