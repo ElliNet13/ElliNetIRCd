@@ -22,7 +22,7 @@ jobs:
       with:
         release-type: simple
         default-branch: master
-        changelog-types: '[{"type": "feat", "section": "New Features"}, {"type": "imp", "section": "Improvements"}, {"type": "ref", "section": "Refactors"}, {"type": "fix", "section": "Bug Fixes"}, {"type": "rev", "section": "Reverts"}, {"type": "doc", "section": "Documentation"}, {"type": "misc", "section": "Miscellaneous"}]'
+        changelog-types: '[{"type": "feat", "section": "New Features"}, {"type": "imp", "section": "Improvements"}, {"type": "ref", "section": "Refactors"}, {"type": "fix", "section": "Bug Fixes"}, {"type": "rev", "section": "Reverts"}, {"type": "doc", "section": "Documentation"}, {"type": "misc", "section": "Miscellaneous"}, {"type": "chore", "section": "Miscellaneous/Deps"}]'
         # feat  - new features added to the project
         # imp   - improvements to existing functionality
         # ref   - code refactoring with no behavior change
