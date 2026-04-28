@@ -232,8 +232,8 @@ class ConnectedState(UserState):
                 usermodes="",
                 chanmodes="",
                 # RPL_ISUPPORT (005), advertise server capabilities (not much)
-                cap1 = "AWAYLEN=0 CASEMAPPING=ascii CHANLIMIT=#: CHANMODES= CHANNELLEN=50 CHANTYPES=# ELIST=",
-                cap2 = "HOSTLEN=63 KICKLEN=0 MAXLIST= MAXTARGETS=12 MODES=0 NICKLEN=15 STATUSMSG= TOPICLEN=0 USERLEN=15",
+                cap1 = "AWAYLEN=0 CASEMAPPING=ascii CHANLIMIT=# CHANTYPES=#",
+                cap2 = "HOSTLEN=63 KICKLEN=0 MAXLIST=b: MAXTARGETS=12 MODES=0 NICKLEN=15 STATUSMSG=@+ TOPICLEN=0 USERLEN=15"
             )
         ).split('\n'))
 
