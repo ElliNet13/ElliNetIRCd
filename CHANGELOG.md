@@ -1,27 +1,5 @@
 # Changelog
 
-## [1.0.2](https://github.com/ElliNet13/ElliNetIRCd/compare/v1.0.2...v1.0.2) (2026-04-28)
-
-
-### Bug Fixes
-
-* concurrent writes ([069f891](https://github.com/ElliNet13/ElliNetIRCd/commit/069f8916620852ef9d6734af617d6531f72ab8b8)), closes [#17](https://github.com/ElliNet13/ElliNetIRCd/issues/17)
-* each rpl starts with the nick ([2ab4a28](https://github.com/ElliNet13/ElliNetIRCd/commit/2ab4a28b1930775ba1f3f0b657ff8fb18c437d3e))
-* Fix tests ([0c11e42](https://github.com/ElliNet13/ElliNetIRCd/commit/0c11e42894890872a5eae2b8e2525f9485a08990))
-* Fix tests by removing lines from requirements release-as:1.0.0 ([c1489e5](https://github.com/ElliNet13/ElliNetIRCd/commit/c1489e525610732255b4b6905ca8739bb609fbdf))
-* Get requirements to work release-as:1.0.0 ([6f44fc1](https://github.com/ElliNet13/ElliNetIRCd/commit/6f44fc16ea4498bf19015267478124d7006b4b66))
-* ghost nick after half-registration ([8a5f866](https://github.com/ElliNet13/ElliNetIRCd/commit/8a5f866bf2bd56aec6175e4b379afd90189f638d))
-* ignore missing token in PONG ([8e1a07c](https://github.com/ElliNet13/ElliNetIRCd/commit/8e1a07c804b2fa9e87ffbffbb7de012c0bf0bb7c))
-* ircexception format ([956fbd6](https://github.com/ElliNet13/ElliNetIRCd/commit/956fbd60e6ec9e0ff90f5f483b487ed30e2c86f4))
-* log all PING/PONG in DEBUG, send HOST in PONG ([f9f45a2](https://github.com/ElliNet13/ElliNetIRCd/commit/f9f45a2ae54f8a36cf63cc72877e424b900dc28b))
-* log channel-send messages ([401d256](https://github.com/ElliNet13/ElliNetIRCd/commit/401d2563285bcb095763fb0763a61cbb6dd9a3f6))
-* Replace placeholder author email in setup.cfg ([c094552](https://github.com/ElliNet13/ElliNetIRCd/commit/c09455233fb7c22fb2b8191a05ccbfbc6892b4a3))
-* setup was still v1 ([5cc0601](https://github.com/ElliNet13/ElliNetIRCd/commit/5cc0601209d325303cb5b5e3c5c111d386746619))
-* Some clients crash while parsing ISUPPORT if there is a key with no value ([e411731](https://github.com/ElliNet13/ElliNetIRCd/commit/e41173112d7dc69b96939ead0d6212931c5b269c))
-* typo in 005 ([1576911](https://github.com/ElliNet13/ElliNetIRCd/commit/15769114d88ba0b3b93fda71be51b53f9bc8d586))
-* VERSION file not part of sdist ([c112853](https://github.com/ElliNet13/ElliNetIRCd/commit/c1128536ce708a37acf4661dc52b43ded5fc7460)), closes [#9](https://github.com/ElliNet13/ElliNetIRCd/issues/9)
-* was using ADDR instead of HOST ([ec765b6](https://github.com/ElliNet13/ElliNetIRCd/commit/ec765b66704769137ed4c9c2680cdef20113dc21))
-
 ## [1.0.2](https://github.com/ElliNet13/ElliNetIRCd/compare/v1.0.1...v1.0.2) (2026-04-28)
 
 
