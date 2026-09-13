@@ -35,3 +35,4 @@ The configuration is done via environment variables, see `--help`:
       TIMEOUT        kick inactive users after x seconds (default: 60)
       PING_TIMEOUT   PING inactive users x seconds before timeout (default: 5)
       LOGLEVEL       logging verbosity (default: WARNING)
+```
