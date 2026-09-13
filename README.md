@@ -6,14 +6,13 @@ A python asynchronous IRC server based on aioirc.
 ### Installation and Usage
 
 Download and install the latest stable version using pip.
-Windows users might replace `python3` by `py`.
 ```bash
-python3 -m pip install ellinetircd
+python -m pip install ellinetircd
 ```
 
 Then run the server:
 ```bash
-HOST=0.0.0.0 LOGLEVEL=INFO python3 -m ellinetircd
+HOST=0.0.0.0 LOGLEVEL=INFO python -m ellinetircd
 ```
 If you are using powershell you can use the following command:
 ```powershell
