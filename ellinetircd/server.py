@@ -8,7 +8,7 @@ import ellinetircd
 from ellinetircd import sdnotify
 from ellinetircd.exceptions import Disconnect
 from ellinetircd.user import User
-
+import ellinetircd.channel
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +39,6 @@ class Server:
 
         logger.info("Connection with %s closed.", user)
 
-    def started(self, _listeners: Any) -> None:
-        sdnotify.ready()
-        ellinetircd.update_status()
-
     async def _onterm(self) -> None:
         with trio.open_signal_receiver(signal.SIGTERM, signal.SIGINT) as signal_aiter:
             async for _ in signal_aiter:
@@ -56,20 +52,24 @@ class Server:
         ellinetircd.servlocal.set(ServLocal(self.host, self.pwd, {}, {}))
         async with trio.open_nursery() as self._nursery:
             self._nursery.start_soon(self._onterm)
-            logger.info("Listening on %s port %s.", self.addr, self.port)
-            await trio.serve_tcp(self.handle, self.port, host=self.addr, task_status=self)
+            logger.info(f"Starting server on {self.addr}:{self.port}...")
+
+            sdnotify.ready()
+            ellinetircd.update_status()
+
+            await trio.serve_tcp(self.handle, self.port, host=self.addr)
 
 
 @dataclasses.dataclass(eq=False)
 class ServLocal:
     host: str
-    pwd: str  # password, "pass" is a reserved keyword
+    pwd: Optional[str]  # password, "pass" is a reserved keyword
     users: Dict[str, User]
     channels: Dict[str, "ellinetircd.channel.Channel"]
 
     def __repr__(self) -> str:
         return (
-            f'{self.__name__}('
+            f'{self.__class__.__name__}('
             f'host: {self.host!r}, '
             f'pass: {"yes" if self.pwd else "no"}, '
             f'users: {len(self.users)}, '
