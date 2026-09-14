@@ -45,7 +45,7 @@ class UserState(metaclass=abc.ABCMeta):
         logger.debug('Dispatch to %s: %s', cmd, params)
         meth = getattr(self, cmd, None)
         if not meth or not getattr(meth, 'command', False):
-            raise ErrUnknownError(self.user, f"Command {cmd} is unknown.")
+            raise ErrUnknownError(self.user, cmd, "Unknown command")
 
         sign = inspect.signature(meth)
         try:
