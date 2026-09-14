@@ -1,3 +1,3 @@
 # TODO List
 
-- [ ] Add plugin system
+- [ ] Continue adding plugin system

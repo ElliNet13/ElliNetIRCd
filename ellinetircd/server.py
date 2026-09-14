@@ -9,6 +9,7 @@ from ellinetircd import sdnotify
 from ellinetircd.exceptions import Disconnect
 from ellinetircd.user import User
 import ellinetircd.channel
+import ellinetircd.plugins
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class Server:
         self.addr = addr
         self.port = port
         self.pwd = pwd
+        self._plugins = ellinetircd.plugins.find_all_plugins()
 
     async def handle(self, stream: trio.SocketStream) -> None:
         servlocal = ellinetircd.servlocal.get()
