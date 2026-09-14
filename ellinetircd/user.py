@@ -8,8 +8,8 @@ from typing import List, Optional, Set, Tuple, Union
 import ellinetircd
 from ellinetircd.config import config as cfg
 from ellinetircd.exceptions import IRCException, Disconnect
-from ellinetircd.states import PasswordState, ConnectedState, QuitState
-
+from ellinetircd.states import PasswordState, ConnectedState, QuitState, AnyState
+import ellinetircd.user
 
 logger = logging.getLogger('ellinetircd.user')
 
@@ -40,14 +40,14 @@ _safenets = [
 
 
 class User:
-    def __init__(self, stream: trio.abc.Stream, nursery: trio.Nursery) -> None:
+    def __init__(self, stream: trio.SocketStream, nursery: trio.Nursery) -> None:
         servlocal = ellinetircd.servlocal.get()
         self.stream = stream
         self._nursery = nursery
         self._nick: Optional[str] = None
-        self._addr: Tuple[str, int, ...] = stream.socket.getpeername()
+        self._addr = stream.socket.getpeername()
         self._realname: Optional[str] = None
-        self.state = None
+        self.state: AnyState = None
         self.state = (PasswordState if servlocal.pwd else ConnectedState)(self)
         self.channels = set()
         self._ping_timer = trio.CancelScope()  # dummy
@@ -67,7 +67,7 @@ class User:
         return self._nick
     
     @property
-    def addr(self) -> Tuple[str, int, ...]:
+    def addr(self):
         return self._addr
     
     @property
@@ -79,7 +79,7 @@ class User:
         return self._realname
 
     @nick.setter
-    def nick(self, nick: str) -> None:
+    def nick(self, nick: Optional[str]) -> None:
         servlocal = ellinetircd.servlocal.get()
         servlocal.users[nick] = servlocal.users.pop(self._nick, self)
         self._nick = nick
@@ -158,6 +158,9 @@ class User:
                     args.append(trailing)
 
                 # Execute the command
+                if self.state is None:
+                    raise ValueError("User state is None")
+                
                 try:
                     await self.state.dispatch(*args)
                 except IRCException as exc:
@@ -172,8 +175,10 @@ class User:
         cancelling all user's related tasks.
         """
         logger.info("Terminate connection of %s", self)
+        if self.state is None:
+            raise ValueError("User state is None")
         if type(self.state) != QuitState:
-            await self.state.QUIT(f":{kick_msg}".split(' '), kick=True)
+            await self.state.QUIT(f":{kick_msg}", kick=True)
         with trio.move_on_after(cfg.PING_TIMEOUT) as cs:
             try:
                 await self.stream.send_eof()

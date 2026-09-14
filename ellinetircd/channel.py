@@ -4,7 +4,7 @@ from functools import partial
 from typing import List, Set, Union
 
 import ellinetircd
-
+import ellinetircd.user
 
 logger = logging.getLogger(__name__)
 

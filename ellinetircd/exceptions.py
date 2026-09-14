@@ -17,6 +17,10 @@ class IRCException(Exception):
 
     They are excepted by dispatch() and forwarded to the user.
     """
+
+    code: int
+    msg: str
+
     def __init__(self, *args: Any) -> None:
         super().__init__(type(self).format(*args))
 

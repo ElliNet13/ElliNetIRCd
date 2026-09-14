@@ -13,8 +13,10 @@ import trio
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
 
 import ellinetircd
-from ellinetircd.channel import Channel
 from ellinetircd.exceptions import *
+import ellinetircd.user
+
+from typing import TYPE_CHECKING
 
 FuncType = TypeVar('FuncType', bound=Callable[..., Any])
 
@@ -23,6 +25,7 @@ logger = logging.getLogger(__name__)
 nick_re = re.compile(r"[a-zA-Z][a-zA-Z0-9\-_]{1,15}")
 chan_re = re.compile(r"[&#][a-zA-Z0-9\-_]{1,49}")
 
+type AnyState = UserState | ConnectedState | PasswordState | RegisteredState | QuitState | None
 
 def command(func: FuncType) -> FuncType:
     """ Denote the function can be triggered by an IRC message """
@@ -42,7 +45,7 @@ class UserState(metaclass=abc.ABCMeta):
         logger.debug('Dispatch to %s: %s', cmd, params)
         meth = getattr(self, cmd, None)
         if not meth or not getattr(meth, 'command', False):
-            raise ErrUnknownError(self.user, '-', f"Command {cmd} is unknown.")
+            raise ErrUnknownError(self.user, f"Command {cmd} is unknown.")
 
         sign = inspect.signature(meth)
         try:
@@ -270,6 +273,7 @@ class RegisteredState(UserState):
     @command
     async def JOIN(self, channels: str) -> None:
         servlocal = ellinetircd.servlocal.get()
+        from ellinetircd.channel import Channel
 
         for channel in channels.split(','):
             if not chan_re.match(channel):
@@ -322,6 +326,9 @@ class RegisteredState(UserState):
         chan = servlocal.channels.get(channel)
         host = servlocal.host
         nick = self.user.nick
+
+        if nick is None:
+            raise ValueError("User nick is None.")
 
         if chan:
             await self.user.send([
@@ -377,6 +384,8 @@ class RegisteredState(UserState):
         requester = self.user.nick
     
         def match(user: "ellinetircd.user.User", target: str) -> bool:
+            if user.nick is None:
+                raise ValueError("User nick is None.")
             if target == "*" or target == "":
                 return True
             if target.startswith("#"):
@@ -493,5 +502,5 @@ class QuitState(UserState):
         raise ErrUnknownError(self.user, "PONG", "Called while in the wrong state.")
 
     @command
-    def QUIT(self, args: str) -> None:
+    async def QUIT(self, reason: str = "", *, kick: bool = False) -> None:
         raise ErrUnknownError(self.user, "QUIT", "Called while in the wrong state.")

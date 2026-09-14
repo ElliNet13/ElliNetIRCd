@@ -12,7 +12,8 @@ import ellinetircd
 from ellinetircd.config import config as cfg
 from ellinetircd.server import Server, ServLocal
 from ellinetircd.states import ConnectedState, RegisteredState
-
+import ellinetircd.user
+import ellinetircd.server
 
 _latin_alpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 from typing import Iterator
@@ -37,9 +38,11 @@ DEFAULT_CONFIG = {
 
 _users = []
 class FakeUser(ellinetircd.user.User):
+    _test_streams = []
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._test_stream = None
+        self._test_stream = self._test_streams.pop(0)
         _users.append(self)
 
     async def usend(self, messages) -> None:
@@ -116,11 +119,16 @@ class TestIRC(unittest.TestCase):
 
     async def connect_user(self):
         user_count = len(_users)
-        stream = await trio.testing.open_stream_to_socket_listener(self._listeners[0])
+    
+        stream = await trio.testing.open_stream_to_socket_listener(
+            self._listeners[0]
+        )
+    
+        FakeUser._test_streams.append(stream)
+    
         await waitfor(lambda: len(_users) == user_count + 1)
-        user = self._users[user_count]
-        user._test_stream = stream
-        return user
+    
+        return self._users[user_count]
 
     async def register(self, user, nickname, username=None, realname=None) -> None:
         if username is None:

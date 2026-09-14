@@ -28,5 +28,12 @@ _notify_socket = os.getenv('NOTIFY_SOCKET', '')
 if _notify_socket:
     if _notify_socket.startswith('@'):
         _notify_socket = f'\0{_notify_socket[1:]}'
-    _sdsocket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+    if hasattr(socket, "AF_UNIX"):
+        family = socket.AF_UNIX # pyright: ignore[reportAttributeAccessIssue]
+    else:
+        # Platform/Python build doesn't provide Unix-domain sockets.
+        family = socket.AF_INET
+    
+    _sdsocket = socket.socket(family, socket.SOCK_DGRAM)
     _sdsocket.connect(_notify_socket)

@@ -20,7 +20,7 @@ class Server:
         self.port = port
         self.pwd = pwd
 
-    async def handle(self, stream: trio.abc.Stream) -> None:
+    async def handle(self, stream: trio.SocketStream) -> None:
         servlocal = ellinetircd.servlocal.get()
         async with trio.open_nursery() as nursery:
             user = User(stream, nursery)
