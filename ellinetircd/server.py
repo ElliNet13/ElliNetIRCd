@@ -51,7 +51,7 @@ class Server:
                 self._nursery.cancel_scope.cancel()
 
     async def serve(self) -> None:
-        ellinetircd.servlocal.set(ServLocal(self.host, self.pwd, {}, {}))
+        ellinetircd.servlocal.set(ServLocal(self.host, self.pwd, {}, {}, self._plugins))
         async with trio.open_nursery() as self._nursery:
             self._nursery.start_soon(self._onterm)
             logger.info(f"Starting server on {self.addr}:{self.port}...")
@@ -68,6 +68,7 @@ class ServLocal:
     pwd: Optional[str]  # password, "pass" is a reserved keyword
     users: Dict[str, User]
     channels: Dict[str, "ellinetircd.channel.Channel"]
+    plugins: list[ellinetircd.plugins.PluginBase]
 
     def __repr__(self) -> str:
         return (
@@ -75,5 +76,6 @@ class ServLocal:
             f'host: {self.host!r}, '
             f'pass: {"yes" if self.pwd else "no"}, '
             f'users: {len(self.users)}, '
-            f'channels: {len(self.channels)})'
+            f'channels: {len(self.channels)}, '
+            f'plugins: {len(self.plugins)})'
         )

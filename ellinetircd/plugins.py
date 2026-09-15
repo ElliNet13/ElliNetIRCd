@@ -7,8 +7,11 @@ from importlib import metadata
 from pathlib import Path
 from types import ModuleType
 from typing import Optional, Any
+import logging
 
 from ellinetircd.PluginAPI import PluginType, LanguageContext, CommandContext
+
+logger = logging.getLogger(__name__)
 
 class PluginRequirementError(Exception):
     """Raised when a plugin does not meet its requirements."""
@@ -41,7 +44,7 @@ def check_required(
             )
 
 
-def create_plugin(import_path: Optional[str], module: Optional[ModuleType]) -> "PluginBase":
+def create_plugin(import_path: Optional[str]=None, module: Optional[ModuleType]=None) -> "PluginBase":
     if import_path is not None and module is None:
         module = importlib.import_module(import_path)
 
@@ -51,44 +54,18 @@ def create_plugin(import_path: Optional[str], module: Optional[ModuleType]) -> "
     check_required(module, {
         "setup": callable,
         "PLUGIN_TYPE": PluginType,
+        "PLUGIN_NAME": str,
     })
 
     if module.PLUGIN_TYPE == PluginType.LANGUAGE:
-        return LanguagePlugin(module.__name__, module)
+        return LanguagePlugin(module.PLUGIN_NAME, module)
     elif module.PLUGIN_TYPE == PluginType.COMMAND:
-        return CommandPlugin(module.__name__, module)
+        return CommandPlugin(module.PLUGIN_NAME, module)
     else:
         raise PluginRequirementError(
-            f"Plugin {module.__name__!r} has unknown PLUGIN_TYPE "
+            f"Plugin {module.PLUGIN_NAME!r} has unknown PLUGIN_TYPE "
             f"{module.PLUGIN_TYPE!r}."
         )
-
-
-def _is_editable_install(package_name: str) -> bool:
-    """Best-effort check for whether a package is installed in editable mode.
-
-    Relies on the PEP 660 `direct_url.json` metadata file, which pip writes
-    with `"editable": true` under `dir_info` for `pip install -e` installs.
-    """
-    try:
-        dist = metadata.distribution(package_name)
-    except metadata.PackageNotFoundError:
-        return False
-
-    try:
-        raw = dist.read_text("direct_url.json")
-    except Exception:
-        raw = None
-
-    if not raw:
-        return False
-
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
-        return False
-
-    return bool(data.get("dir_info", {}).get("editable", False))
 
 
 def _load_package_plugins(package_name: str) -> list[ModuleType]:
@@ -112,7 +89,7 @@ def _load_package_plugins(package_name: str) -> list[ModuleType]:
         try:
             modules.append(importlib.import_module(full_name))
         except Exception as exc:
-            print(f"Failed to import plugin {full_name!r}: {exc}")
+            logger.error(f"Failed to import plugin {full_name!r}: {exc}")
 
     return modules
 
@@ -137,7 +114,7 @@ def _load_directory_plugins(directory: Path) -> list[ModuleType]:
         try:
             spec.loader.exec_module(module)
         except Exception as exc:
-            print(f"Failed to import plugin {path!r}: {exc}")
+            logger.error(f"Failed to import plugin {path!r}: {exc}")
             continue
 
         modules.append(module)
@@ -156,23 +133,30 @@ def find_all_plugins() -> list["PluginBase"]:
     """
     discovered_modules: list[ModuleType] = []
 
+    logger.debug("Discovering plugins...")
+
     # 1. core_plugins folder shipped inside the ellinetircd package.
+    logger.debug("Loading core plugins...")
     discovered_modules.extend(_load_package_plugins("ellinetircd.core_plugins"))
 
     # 2. ./plugins relative to the current working directory, if it exists.
     cwd_plugins_dir = Path.cwd() / "plugins"
+    logger.debug("Loading directory plugins from %s...", cwd_plugins_dir)
     discovered_modules.extend(_load_directory_plugins(cwd_plugins_dir))
 
     # 3. test_plugins folder inside the ellinetircd package, editable installs only.
-    if _is_editable_install("ellinetircd"):
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("Loading test plugins...")
         discovered_modules.extend(_load_package_plugins("ellinetircd.test_plugins"))
 
     found_plugins: list["PluginBase"] = []
     for module in discovered_modules:
         try:
-            found_plugins.append(create_plugin(None, module))
+            found_plugins.append(create_plugin(module=module))
         except (PluginRequirementError, ValueError) as exc:
-            print(f"Skipping invalid plugin {getattr(module, '__name__', module)!r}: {exc}")
+            logger.error(f"Skipping invalid plugin {getattr(module, '__name__', module)!r}: {exc}")
+
+    logger.debug("Discovered %d plugins.", len(found_plugins))
 
     return found_plugins
 
@@ -183,7 +167,7 @@ class PluginBase:
         self.module = module
 
     async def _load(self, *args, **kwargs):
-        asyncio.create_task(self.module.setup(*args, **kwargs))
+        await self.module.setup(*args, **kwargs)
 
 
 class LanguagePlugin(PluginBase):

@@ -4,19 +4,22 @@ __all__ = [
 ]
 
 import abc
+import functools
 import inspect
-import ipaddress
 import logging
 import re
 import textwrap
 import trio
-from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
+from typing import Any, Callable, Optional, TypeVar, TYPE_CHECKING
 
 import ellinetircd
 from ellinetircd.exceptions import *
 import ellinetircd.user
+from ellinetircd.PluginAPI import CommandContext
+import ellinetircd.plugins
 
-from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ellinetircd.server import ServLocal
 
 FuncType = TypeVar('FuncType', bound=Callable[..., Any])
 
@@ -240,11 +243,56 @@ class ConnectedState(UserState):
             )
         ).split('\n'))
 
-class RegisteredState(UserState):
+class RegisteredStateMeta(abc.ABCMeta):
+    def __new__(mcls, name, bases, attrs):
+        original_init = attrs.get("__init__")
+
+        if original_init is not None:
+            def __init__(self, user: "ellinetircd.user.User", *args, **kwargs):
+                logger.debug("Init caught for %s, user=%s", name, user)
+
+                def command_wrapper(func):
+                    logger.debug("Inserting command %s for %s, user=%s", func.__name__, name, user)
+                    func = command(func)
+                    setattr(self, func.__name__, func)
+                    return func
+
+                context = CommandContext(command_wrapper, user)
+
+                servlocal: "ServLocal" = ellinetircd.servlocal.get()
+
+                if servlocal.plugins is None or []:
+                    logger.debug("No plugins exist of any type to load for user %s", user)
+                    original_init(self, user, *args, **kwargs)
+                    return
+
+                for plugin in servlocal.plugins:
+                    logger.debug("Checking plugin %s for user %s", plugin.name, user)
+                    if isinstance(plugin, ellinetircd.plugins.CommandPlugin):
+                        logger.debug("Loading command plugin %s for user %s", plugin.name, user)
+                        user._nursery.start_soon(plugin.load, context)
+                    else:
+                        logger.debug("Skipping non-command plugin %s for user %s", plugin.name, user)
+
+                logger.debug("Command plugin loading done for %s, user=%s", name, user)
+
+                original_init(self, user, *args, **kwargs)
+
+            attrs["__init__"] = __init__
+        else:
+            raise TypeError("RegisteredStateMeta requires an __init__ method in the class.")
+
+        return super().__new__(mcls, name, bases, attrs)
+
+
+class RegisteredState(UserState, metaclass=RegisteredStateMeta):
     """
     The user sent the NICK command, he is fully registered to the server
     and may use any command.
     """
+
+    def __init__(self, user: "ellinetircd.user.User"):
+        super().__init__(user)
 
     @command
     async def PASS(self, password: str) -> None:

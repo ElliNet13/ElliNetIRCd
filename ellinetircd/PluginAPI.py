@@ -1,6 +1,6 @@
 from enum import Enum
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ellinetircd.user import User

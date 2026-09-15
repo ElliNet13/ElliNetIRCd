@@ -3,13 +3,16 @@ import logging
 import re
 import trio
 import uuid
-from typing import List, Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Union, TYPE_CHECKING
 
 import ellinetircd
 from ellinetircd.config import config as cfg
 from ellinetircd.exceptions import IRCException, Disconnect
 from ellinetircd.states import PasswordState, ConnectedState, QuitState, AnyState
 import ellinetircd.user
+
+if TYPE_CHECKING:
+    from ellinetircd.server import ServLocal
 
 logger = logging.getLogger('ellinetircd.user')
 
@@ -41,7 +44,7 @@ _safenets = [
 
 class User:
     def __init__(self, stream: trio.SocketStream, nursery: trio.Nursery) -> None:
-        servlocal = ellinetircd.servlocal.get()
+        servlocal: "ServLocal" = ellinetircd.servlocal.get()
         self.stream = stream
         self._nursery = nursery
         self._nick: Optional[str] = None

@@ -98,7 +98,7 @@ class TestIRC(unittest.TestCase):
         ellinetircd.user.User = ellinetircd.server.User = FakeUser
         cfg.__dict__.update(dict(DEFAULT_CONFIG, **cls.config))
         cls._server = Server(cfg.HOST, cfg.ADDR, cfg.PORT, cfg.PASS)
-        cls._servlocal = ServLocal(cfg.HOST, cfg.PASS, {}, {})
+        cls._servlocal = ServLocal(cfg.HOST, cfg.PASS, {}, {}, [])
 
     @classmethod
     def tearDownClass(cls) -> None:
