@@ -31,3 +31,8 @@ Check the test plugins for example plugins.
 These are all supported plugins, if it is checked then it has been fully added, if its not checked it is still in dev.
 - [ ] Language support plugins (LANGUAGE)
 - [x] Command plugins (COMMAND)
+
+### Plugin search paths
+- ./plugins
+- ellinetircd.core_plugins
+- ellinetircd.test_plugins (if logging is set to debug)
