@@ -2,7 +2,8 @@ import dataclasses
 import logging
 import signal
 import trio
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
+import tracemalloc
 
 import ellinetircd
 from ellinetircd import sdnotify
@@ -13,6 +14,8 @@ import ellinetircd.plugins
 
 logger = logging.getLogger(__name__)
 
+if logger.isEnabledFor(logging.DEBUG):
+    tracemalloc.start()
 
 class Server:
     def __init__(self, host: str, addr: str, port: int, pwd: Optional[str]) -> None:

@@ -1,19 +1,46 @@
 from enum import Enum
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Type, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ellinetircd.user import User
+    import ellinetircd.plugins
 
 PluginType = Enum("PluginType", ["LANGUAGE", "COMMAND"])
 
+# Classes
 class LanguageContext:
-    def __init__(self, handlers: list[Callable]):
+    def __init__(self, handlers: list[Language]):
         self._handlers = handlers
 
-    def add_handler(self, handler: Callable[[str], None]):
+    def add_language(self, handler: Language):
         self._handlers.append(handler)
-        return handler
+
+class Language:
+    def __init__(self, context: LanguageContext):
+        self._context = context
+
+    def check(self, file_extension: str) -> bool:
+        """Returns True if the file extension is handled by this language"""
+        logger.error("A language must implement the check method!")
+        return False
+
+    def create_plugin(self, code: str, filename: str = "No name") -> ellinetircd.plugins.PluginBase:
+        """Returns a plugin object from the given code"""
+        raise NotImplementedError("A language must implement the create_plugin method!")
+
+    @property
+    def plugin_type_to_class(self) -> Callable[[PluginType], Optional[Type[ellinetircd.plugins.PluginBase]]]:
+        from ellinetircd.plugins import plugin_type_to_class
+        return plugin_type_to_class
+
+    @property
+    def check_required(self) -> Callable[[Any, dict[str, type | Any]], None]:
+        from ellinetircd.plugins import check_required
+        return check_required
 
 class CommandContext:
     def __init__(self, command_decorator: Callable[[Callable], Callable], user: "User"):
