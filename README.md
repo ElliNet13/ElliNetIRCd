@@ -30,7 +30,7 @@ Check the test plugins for example plugins.
 
 ### Supported plugin types
 These are all supported plugins, if it is checked then it has been fully added, if its not checked it is still in dev.
-- [ ] Language support plugins (LANGUAGE) [As of v1.2.0]
+- [x] Language support plugins (LANGUAGE) [As of v1.2.0]
 - [x] Command plugins (COMMAND) [As of v1.1.0]
 
 ### Supported plugin languages
