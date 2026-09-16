@@ -15,10 +15,4 @@ async def setup(context: GenericContext):
         async with BotUser(nursery) as bot:
             await bot.register("TestBot")
             await bot.join("#test")
-            times = 0
-            while True:
-                times += 1
-                await bot.send_message("#test", f"Hello from TestBot! {times}")
-                await trio.sleep(2)
-                if times == 3:
-                    break
+            await bot.send_message("#test", f"Hello from TestBot!")
