@@ -4,10 +4,11 @@ import re
 import trio
 import uuid
 from typing import List, Optional, Set, Union, TYPE_CHECKING
+import contextlib
 
 import ellinetircd
 from ellinetircd.config import config as cfg
-from ellinetircd.exceptions import IRCException, Disconnect
+from ellinetircd.exceptions import IRCException, Disconnect, BotException
 from ellinetircd.states import PasswordState, ConnectedState, QuitState, AnyState
 import ellinetircd.user
 
@@ -205,3 +206,91 @@ class User:
                 for msg in messages:
                     logger.log(ellinetircd.IO, "send to %s: %s", self, msg)
             await self.stream.send_all(b"".join(f"{msg}\r\n".encode() for msg in messages))
+
+class BotUser(User):
+    def __init__(self, nursery: trio.Nursery):
+        self.servlocal = ellinetircd.servlocal.get()
+        server_socket, client_socket = trio.socket.socketpair()
+        super().__init__(trio.SocketStream(server_socket), nursery)
+        self._client = trio.SocketStream(client_socket)
+        self._closed = False
+        self._terminated = False
+ 
+    async def __aenter__(self):
+        self._nursery.start_soon(self.bot_serve)
+        if self.servlocal.pwd is not None:
+            await self.usend(f"PASS {self.servlocal.pwd}")
+        return self
+ 
+    @property
+    def client(self):
+        return self._client
+ 
+    @property
+    def closed(self):
+        return self._closed
+ 
+    @property
+    def terminated(self):
+        return self._terminated
+ 
+    @property
+    def nursery(self):
+        return self._nursery
+ 
+    async def usend(self, message: str) -> None:
+        """
+        Inject a raw IRC line into the server, as if this bot were a
+        client typing it. This is the bot's *input* channel -- do not
+        confuse it with the inherited `send()`, which is how the
+        server delivers output *to* this connection.
+        """
+        await self._client.send_all(message.rstrip("\r\n").encode("utf-8") + b"\r\n")
+ 
+    async def register(self, nickname: str, realname: str = "EllinetIRCd Local Server Bot") -> None:
+        if self.nick is None:
+            await self.usend(f"NICK {nickname}")
+            await self.usend(f"USER {nickname} 0 * :{realname}")
+        else:
+            raise BotException("Bot already registered")
+ 
+    async def disconnect(self, reason: str = "Bot is disconnecting") -> None:
+        await self.usend(f"QUIT :{reason}")
+ 
+    async def __aexit__(self, exc_type=None, exc=None, tb=None):
+        if self._closed:
+            return
+ 
+        if not self._terminated:
+            await self.disconnect("Bot is done")
+ 
+        self._closed = True
+ 
+    async def bot_serve(self) -> None:
+        try:
+            await self.serve()
+        except Disconnect as exc:
+            logger.warning("Protocol violation while serving bot %s, %s.", self.nick, repr(exc.__cause__ or exc))
+            await self.terminate(exc.args[0] if exc.args else "Protocol violation")
+        except Exception:
+            logger.exception("Error while serving bot %s.", self.nick)
+            await self.terminate("Internal host error")
+        else:
+            await self.terminate()
+ 
+    async def terminate(self, kick_msg: str = "Connection terminated by host") -> None:
+        self._closed = True
+        self._terminated = True
+        await super().terminate(kick_msg)
+ 
+    async def join(self, channels: str | list[str], password: Optional[str] = None) -> None:
+        channel = ",".join(channels) if isinstance(channels, list) else channels
+        await self.usend(f"JOIN {channel}" + (f" {password}" if password else ""))
+ 
+    async def part(self, channels: str | list[str], reason: Optional[str] = None) -> None:
+        channel = ",".join(channels) if isinstance(channels, list) else channels
+        await self.usend(f"PART {channel}" + (f" :{reason}" if reason else ""))
+ 
+    async def send_message(self, channel: str, message: str) -> None:
+        await self.usend(f"PRIVMSG {channel} :{message}")
+ 

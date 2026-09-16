@@ -6,13 +6,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from ellinetircd.user import User
     import ellinetircd.plugins
+    from ellinetircd.user import User
 
-PluginType = Enum("PluginType", ["LANGUAGE", "COMMAND"])
+PluginType = Enum("PluginType", ["LANGUAGE", "COMMAND", "GENERIC"])
 
 # Classes
-class LanguageContext:
+class ContextBase:
+    pass
+
+class LanguageContext(ContextBase):
     def __init__(self, handlers: list[Language]):
         self._handlers = handlers
 
@@ -42,7 +45,7 @@ class Language:
         from ellinetircd.plugins import check_required
         return check_required
 
-class CommandContext:
+class CommandContext(ContextBase):
     def __init__(self, command_decorator: Callable[[Callable], Callable], user: "User"):
         self._command_decorator = command_decorator
         self._user = user
@@ -53,3 +56,7 @@ class CommandContext:
     @property
     def user(self) -> "User":
         return self._user
+
+class GenericContext(ContextBase):
+    def __init__(self):
+        pass

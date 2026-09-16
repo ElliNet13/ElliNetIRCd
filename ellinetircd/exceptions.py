@@ -8,6 +8,9 @@ __ALL__ = [
 import ellinetircd
 from typing import Any
 
+class BotException(Exception):
+    pass
+
 class Disconnect(Exception):
     pass
 

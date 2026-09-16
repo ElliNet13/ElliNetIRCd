@@ -32,6 +32,7 @@ Check the test plugins for example plugins.
 These are all supported plugins, if it is checked then it has been fully added, if its not checked it is still in dev.
 - [x] Language support plugins (LANGUAGE) [As of v1.2.0]
 - [x] Command plugins (COMMAND) [As of v1.1.0]
+- [x] Generic plugins (GENERIC) [As of v1.2.0]
 
 ### Supported plugin languages
 These are all supported plugins languages, if it is checked then it has been fully added, if its not checked it is still in dev.

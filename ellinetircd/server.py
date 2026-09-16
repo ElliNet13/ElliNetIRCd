@@ -9,6 +9,8 @@ import ellinetircd
 from ellinetircd import sdnotify
 from ellinetircd.exceptions import Disconnect
 from ellinetircd.user import User
+from ellinetircd.PluginAPI import GenericContext
+from ellinetircd.plugins import GenericPlugin
 import ellinetircd.channel
 import ellinetircd.plugins
 
@@ -62,7 +64,14 @@ class Server:
             sdnotify.ready()
             ellinetircd.update_status()
 
+            self._nursery.start_soon(self.run_plugins)
+
             await trio.serve_tcp(self.handle, self.port, host=self.addr)
+
+    async def run_plugins(self) -> None:
+        for plugin in self._plugins:
+            if isinstance(plugin, GenericPlugin):
+                await plugin.load(GenericContext())
 
 
 @dataclasses.dataclass(eq=False)

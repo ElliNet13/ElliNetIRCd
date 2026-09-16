@@ -9,7 +9,7 @@ import logging
 import traceback
 import inspect
 
-from ellinetircd.PluginAPI import PluginType, LanguageContext, CommandContext, Language
+from ellinetircd.PluginAPI import PluginType, LanguageContext, CommandContext, GenericContext, Language
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,8 @@ def plugin_type_to_class(plugin_type: PluginType) -> Optional[type["PluginBase"]
         return LanguagePlugin
     elif plugin_type == PluginType.COMMAND:
         return CommandPlugin
+    elif plugin_type == PluginType.GENERIC:
+        return GenericPlugin
     else:
         return None
 
@@ -305,17 +307,20 @@ class PluginBase:
         self.name = name
         self.module = module
 
-    async def _load(self, *args, **kwargs):
+    async def load(self, context):
         if not inspect.iscoroutinefunction(self.module.setup):
             logger.error(f"Plugin {self.name!r} does not have a coroutine setup() method.")
             return
-        await self.module.setup(*args, **kwargs)
+        await self.module.setup(context)
 
 class LanguagePlugin(PluginBase):
     async def load(self, language_context: LanguageContext):
-        await super()._load(language_context)
-
+        await super().load(language_context)
 
 class CommandPlugin(PluginBase):
     async def load(self, command_context: CommandContext):
-        await super()._load(command_context)
+        await super().load(command_context)
+
+class GenericPlugin(PluginBase):
+    async def load(self, generic_context: GenericContext):
+        await super().load(generic_context)
