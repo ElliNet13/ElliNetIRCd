@@ -11,7 +11,6 @@ import re
 import trio
 import uuid
 from typing import List, Optional, Set, Union, TYPE_CHECKING
-import contextlib
 
 import ellinetircd
 from ellinetircd.config import config as cfg

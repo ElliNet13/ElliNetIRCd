@@ -88,8 +88,25 @@ def plugin_type_to_class(plugin_type: PluginType) -> Optional[type["PluginBase"]
         return None
 
 
+def _is_hidden_relpath(path: Path, root: Path) -> bool:
+    """
+    Whether ``path`` (or any of its parent directories up to ``root``)
+    starts with an underscore, e.g. ``root/_disabled/foo.py``. Used to
+    keep the existing "leading underscore means skip" convention working
+    at any depth now that subfolders are scanned too.
+    """
+    return any(part.startswith("_") for part in path.relative_to(root).parts)
+
+
 def _load_package_plugins(package_name: str) -> list[ModuleType]:
-    """Import every submodule of a plugin package (e.g. ellinetircd.core_plugins)."""
+    """
+    Import every submodule of a plugin package (e.g. ellinetircd.core_plugins),
+    including modules nested in subpackages/subfolders.
+
+    Note: a subfolder is only descended into if it is itself a proper
+    Python package (i.e. it has an ``__init__.py``) - that's a requirement
+    of ``pkgutil.walk_packages``, which is what makes the recursion work.
+    """
     modules: list[ModuleType] = []
 
     try:
@@ -101,15 +118,15 @@ def _load_package_plugins(package_name: str) -> list[ModuleType]:
     if package_path is None:
         return modules
 
-    for module_info in pkgutil.iter_modules(package_path):
-        if module_info.name.startswith("_"):
+    for module_info in pkgutil.walk_packages(package_path, prefix=f"{package_name}."):
+        leaf_name = module_info.name.rsplit(".", 1)[-1]
+        if leaf_name.startswith("_"):
             continue
 
-        full_name = f"{package_name}.{module_info.name}"
         try:
-            modules.append(importlib.import_module(full_name))
+            modules.append(importlib.import_module(module_info.name))
         except Exception as exc:
-            logger.error(f"Failed to import plugin {full_name!r}: {exc}")
+            logger.error(f"Failed to import plugin {module_info.name!r}: {exc}")
 
     return modules
 
@@ -134,17 +151,27 @@ def _package_directory(package_name: str) -> Optional[Path]:
 
 
 def _load_directory_plugins(directory: Path) -> list[ModuleType]:
-    """Import every top-level .py file in an arbitrary directory (not a package)."""
+    """
+    Import every .py file under an arbitrary directory (not a package),
+    including ones nested in subfolders.
+    """
     modules: list[ModuleType] = []
 
     if not directory.is_dir():
         return modules
 
-    for path in sorted(directory.glob("*.py")):
-        if path.stem.startswith("_"):
+    for path in sorted(directory.rglob("*.py")):
+        if path.stem.startswith("_") or _is_hidden_relpath(path.parent, directory) and path.parent != directory:
+            continue
+        if _is_hidden_relpath(path, directory):
             continue
 
-        module_name = f"_external_plugin_{directory.name}_{path.stem}"
+        # Build the module name from the full path relative to `directory`
+        # (not just the stem) so that e.g. foo/test.py and bar/test.py
+        # don't collide.
+        rel_parts = path.relative_to(directory).with_suffix("").parts
+        module_name = "_external_plugin_{}_{}".format(directory.name, "_".join(rel_parts))
+
         spec = importlib.util.spec_from_file_location(module_name, path)
         if spec is None or spec.loader is None:
             continue
@@ -166,8 +193,8 @@ def _load_directory_other_plugins(
     language_handlers: list[Language],
 ) -> list["PluginBase"]:
     """
-    Scan ``directory`` for non-python plugin files and build a plugin for
-    each one whose extension is claimed by a Language handler.
+    Scan ``directory`` (recursively) for non-python plugin files and build
+    a plugin for each one whose extension is claimed by a Language handler.
 
     This only runs after every python plugin has been discovered and every
     LANGUAGE plugin among them has had a chance to register a handler -
@@ -178,8 +205,10 @@ def _load_directory_other_plugins(
     if not directory.is_dir() or not language_handlers:
         return other_plugins
 
-    for path in sorted(directory.iterdir()):
+    for path in sorted(directory.rglob("*")):
         if not path.is_file() or path.suffix == ".py" or path.stem.startswith("_"):
+            continue
+        if _is_hidden_relpath(path, directory):
             continue
 
         handler = next((h for h in language_handlers if h.check(path.suffix)), None)
@@ -263,6 +292,11 @@ def find_all_plugins() -> list["PluginBase"]:
     .lua plugins sitting in test_plugins or ./plugins, and a LANGUAGE
     plugin dropped in ./plugins enable other .lua files in that same
     directory.
+
+    Subfolders are supported: package sources (1, 2) are scanned recursively
+    via pkgutil.walk_packages (subfolders there need an __init__.py to be
+    picked up), and the directory source (3), plus the non-python pass for
+    all three, are scanned recursively via Path.rglob.
     """
     found_plugins: list["PluginBase"] = []
     language_handlers: list[Language] = []
@@ -280,7 +314,7 @@ def find_all_plugins() -> list["PluginBase"]:
         if not enabled:
             continue
 
-        directory = Path.cwd() / cwd_subdir if cwd_subdir else _package_directory(package_name) # pyright: ignore[reportArgumentType]
+        directory = Path.cwd() / cwd_subdir if cwd_subdir else _package_directory(package_name)  # pyright: ignore[reportArgumentType]
 
         logger.debug(
             "Loading plugins from %s...",
