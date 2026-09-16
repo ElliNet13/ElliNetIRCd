@@ -29,4 +29,4 @@ async def setup(context: LanguageContext):
         def create_plugin(self, code: str, filename: str = "No name") -> "ellinetircd.plugins.PluginBase":
             return ellinetircd.plugins.CommandPlugin("Test command via test language", TestCommandPlugin())
 
-    context.add_language(TestLanguage(context))
+    context.add_language(TestLanguage())
