@@ -39,6 +39,10 @@ These are all supported plugins languages, if it is checked then it has been ful
 - [x] Python [As of v1.1.0]
 - [x] Lua [As of v1.2.0]
 
+### Important notes
+- Lua does not support async functions yet. (Setup in lua gets a wrapper function to make it async.)
+- Lua can not be used to make a bot. (Due to missing async.)
+
 ### Plugin search paths
 - ./plugins
 - ellinetircd.core_plugins
