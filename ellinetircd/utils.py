@@ -1,3 +1,6 @@
+# Copyright (c) 2026 ElliNet13
+# Licensed under the GNU General Public License v3.0 or later.
+
 from typing import TYPE_CHECKING
 
 import ellinetircd

@@ -1,3 +1,10 @@
+# Originally from aioircd
+# Copyright (c) 2020 Julien Castiaux
+# Original work licensed under the MIT License.
+#
+# Copyright (c) 2026 ElliNet13
+# Modifications licensed under the GNU General Public License v3.0 or later.
+
 import logging
 import os
 from socket import gethostname, gethostbyname
