@@ -21,11 +21,9 @@ jobs:
       with:
         ref: ${{ github.event.release.tag_name }}
 
-    - name: Check release tag
-      run: |
-        echo "Release: ${{ github.event.release.name }}"
-        echo "Tag: ${{ github.event.release.tag_name }}"
-
+    - name: Write version
+      run: echo "${{ github.event.release.tag_name }}" | sed 's/^v//' > version.txt
+      
     - name: Set up Python 3.14
       uses: actions/setup-python@v7
       with:
