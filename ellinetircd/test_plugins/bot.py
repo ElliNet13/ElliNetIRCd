@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 PLUGIN_TYPE = PluginType.GENERIC
 PLUGIN_NAME = "BOT test plugin"
+PLUGIN_ID = "test_bot"
 
 async def setup(context: GenericContext):
     logger.info("Hello from the BOT test plugin!")

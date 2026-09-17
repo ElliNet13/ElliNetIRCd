@@ -334,19 +334,48 @@ def find_all_plugins() -> list["PluginBase"]:
         if directory is not None:
             found_plugins.extend(_load_directory_other_plugins(directory, language_handlers))
 
-    logger.debug("Discovered %d plugins.", len(found_plugins))
+    # Deduplicate plugins by their unique ID.
+    seen_ids: set[str] = set()
+    unique_plugins: list["PluginBase"] = []
+
+    for plugin in found_plugins:
+        if plugin.id in seen_ids:
+            logger.debug(
+                "Skipping duplicate plugin %s (id=%s)",
+                plugin.name,
+                plugin.id,
+            )
+            continue
+
+        seen_ids.add(plugin.id)
+        unique_plugins.append(plugin)
+
+    found_plugins = unique_plugins
+
+    logger.info("Discovered %d plugins.", len(found_plugins))
+    for plugin in found_plugins:
+        logger.debug("  %s", plugin)
 
     return found_plugins
 
-
 class PluginBase:
-    def __init__(self, name: str, module):
+    def __init__(self, name: str, module, id: Optional[str] = None):
         self.name = name
         self.module = module
+        if id:
+            self.id = id
+        elif hasattr(module, "PLUGIN_ID"):
+            self.id = module.PLUGIN_ID
+        else:
+            self.id = name
+            logger.warning("Plugin %s has no PLUGIN_ID attribute. Name will be used instead.", name)
+
+    def __str__(self):
+        return f"{self.name} (ID: {self.id})"
 
     async def load(self, context):
         if not inspect.iscoroutinefunction(self.module.setup):
-            logger.error(f"Plugin {self.name!r} does not have a coroutine setup() method.")
+            logger.error(f"Plugin {self} does not have a coroutine setup() method.")
             return
         await self.module.setup(context)
 

@@ -7,10 +7,12 @@ logger = logging.getLogger(__name__)
 
 PLUGIN_TYPE = PluginType.LANGUAGE
 PLUGIN_NAME = "LANGUAGE test plugin"
+PLUGIN_ID = "test_language"
 
 class TestCommandPlugin():
     PLUGIN_TYPE = PluginType.LANGUAGE
     PLUGIN_NAME = "LANGUAGE test plugin"
+    PLUGIN_ID = "test_language_command"
 
     async def setup(self, context: CommandContext):
         logger.info("Hello from the COMMAND test plugin from LANGUAGE test plugin!")

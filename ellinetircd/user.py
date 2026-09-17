@@ -123,7 +123,7 @@ class User:
                 await trio.sleep_forever()
             await self.send(f'PING {uuid.uuid4().hex}', log=logger.isEnabledFor(logging.DEBUG))
 
-    async def serve(self) -> None:
+    async def serve(self, should_ping: bool = True) -> None:
         """
         Read for messages on the user socket, parse them and dispatch
         each message to the current's user state.
@@ -132,14 +132,18 @@ class User:
         while type(self.state) is not QuitState:
 
             # Read the socket in a buffer, wait at most TIMEOUT seconds
-            self._ping_timer.deadline = trio.current_time() + (cfg.TIMEOUT - cfg.PING_TIMEOUT)
+            if should_ping:
+                self._ping_timer.deadline = trio.current_time() + (cfg.TIMEOUT - cfg.PING_TIMEOUT)
             with trio.move_on_after(cfg.TIMEOUT) as cs:
                 try:
                     chunk = await self.stream.receive_some(ellinetircd.MAXLINELEN)
                 except Exception as exc:
                     raise Disconnect("Network failure") from exc
             if cs.cancelled_caught:
-                raise Disconnect("Timeout")
+                if should_ping:
+                    raise Disconnect("Timeout")
+                else:
+                    chunk = b""
             elif not chunk:
                 raise Disconnect("End of transmission")
 
@@ -258,7 +262,7 @@ class BotUser(User):
         """
         await self._client.send_all(message.rstrip("\r\n").encode("utf-8") + b"\r\n")
  
-    async def register(self, nickname: str, realname: str = "EllinetIRCd Local Server Bot") -> None:
+    async def register(self, nickname: str, realname: str = "ElliNetIRCd Local Server Bot") -> None:
         if self.nick is None:
             await self.usend(f"NICK {nickname}")
             await self.usend(f"USER {nickname} 0 * :{realname}")
@@ -279,7 +283,7 @@ class BotUser(User):
  
     async def bot_serve(self) -> None:
         try:
-            await self.serve()
+            await self.serve(False)
         except Disconnect as exc:
             logger.warning("Protocol violation while serving bot %s, %s.", self.nick, repr(exc.__cause__ or exc))
             await self.terminate(exc.args[0] if exc.args else "Protocol violation")
@@ -304,4 +308,45 @@ class BotUser(User):
  
     async def send_message(self, channel: str, message: str) -> None:
         await self.usend(f"PRIVMSG {channel} :{message}")
- 
+
+    async def raw_messages(self):
+        """
+        Yield raw IRC messages sent to the bot by the server.
+        """
+        buffer = b""
+
+        while not self._closed:
+            data = await self.client.receive_some(4096)
+
+            if not data:
+                return
+
+            buffer += data
+
+            while b"\r\n" in buffer:
+                line, buffer = buffer.split(b"\r\n", 1)
+                yield line.decode("utf-8", errors="replace")
+
+    async def messages(self):
+        """
+        Yield incoming PRIVMSGs as:
+            (user, channel, message)
+
+        `channel` is None for private messages.
+        """
+        async for raw in self.raw_messages():
+            if " PRIVMSG " not in raw:
+                continue
+
+            prefix, rest = raw.split(" PRIVMSG ", 1)
+
+            if " :" not in rest:
+                continue
+
+            target, message = rest.split(" :", 1)
+
+            user = prefix.removeprefix(":").split("!", 1)[0]
+
+            channel = target if target.startswith(("#", "&")) else None
+
+            yield user, channel, message

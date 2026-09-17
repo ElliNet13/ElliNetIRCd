@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 PLUGIN_TYPE = PluginType.COMMAND
 PLUGIN_NAME = "COMMAND test plugin"
+PLUGIN_ID = "test_command"
 
 async def setup(context: CommandContext):
     logger.info("Hello from the COMMAND test plugin!")

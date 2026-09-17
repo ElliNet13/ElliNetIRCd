@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 PLUGIN_TYPE = PluginType.LANGUAGE
 PLUGIN_NAME = "Lua language support"
+PLUGIN_ID = "lua"
 
 try:
     import lupa.luajit21 as lupa
