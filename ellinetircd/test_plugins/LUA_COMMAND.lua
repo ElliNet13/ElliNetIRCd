@@ -1,5 +1,6 @@
 PLUGIN_TYPE = Enum.PluginType.COMMAND
 PLUGIN_NAME = "Lua COMMAND test plugin"
+PLUGIN_ID = "LUA_COMMAND"
 
 function setup(context)
     logger.info("Hello from the COMMAND test plugin!")
