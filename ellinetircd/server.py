@@ -78,7 +78,7 @@ class Server:
     async def run_plugins(self) -> None:
         for plugin in self._plugins:
             if isinstance(plugin, GenericPlugin):
-                await plugin.load(GenericContext())
+                self._nursery.start_soon(plugin.load, GenericContext())
 
 
 @dataclasses.dataclass(eq=False)
