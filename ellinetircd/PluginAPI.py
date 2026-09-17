@@ -18,9 +18,16 @@ PluginType = Enum("PluginType", ["LANGUAGE", "COMMAND", "GENERIC"])
 class ContextBase:
     pass
 
+class LanguageContext(ContextBase):
+    def __init__(self, handlers: list[Language]):
+        self._handlers = handlers
+
+    def add_language(self, handler: Language):
+        self._handlers.append(handler)
+
 class Language:
-    def __init__(self):
-        pass
+    def __init__(self, context: LanguageContext):
+        self._context = context
 
     def check(self, file_extension: str) -> bool:
         """Returns True if the file extension is handled by this language"""
@@ -40,13 +47,6 @@ class Language:
     def check_required(self) -> Callable[[Any, dict[str, type | Any]], None]:
         from ellinetircd.plugins import check_required
         return check_required
-
-class LanguageContext(ContextBase):
-    def __init__(self, handlers: list[Language]):
-        self._handlers = handlers
-
-    def add_language(self, handler: Language):
-        self._handlers.append(handler)
 
 class CommandContext(ContextBase):
     def __init__(self, command_decorator: Callable[[Callable], Callable], user: "User"):
