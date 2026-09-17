@@ -1,6 +1,7 @@
 # Copyright (c) 2026 ElliNet13
 # Licensed under the GNU General Public License v3.0 or later.
 
+from __future__ import annotations
 from enum import Enum
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Optional, Type, Any
