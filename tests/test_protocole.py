@@ -46,18 +46,18 @@ class TestTour(AsyncTestCase, TestIRC):
 
         await bob.usend('JOIN #whoischan')
         self.assertEqual(await bob.urecv(), textwrap.dedent('''\
-            :whoisbob JOIN #whoischan\r
+            :whoisbob!~whoisbob@::1 JOIN #whoischan\r
             :ip6-localhost 353 whoisbob = #whoischan :whoisbob\r
             :ip6-localhost 366 whoisbob #whoischan :End of /NAMES list.\r
             '''))
 
         await eve.usend('JOIN #whoischan')
         self.assertEqual(await eve.urecv(), textwrap.dedent('''\
-            :whoiseve JOIN #whoischan\r
+            :whoiseve!~whoiseve@::1 JOIN #whoischan\r
             :ip6-localhost 353 whoiseve = #whoischan :whoisbob whoiseve\r
             :ip6-localhost 366 whoiseve #whoischan :End of /NAMES list.\r
             '''))
-        self.assertEqual(await bob.urecv(), ':whoiseve JOIN #whoischan\r\n')
+        self.assertEqual(await bob.urecv(), ':whoiseve!~whoiseve@::1 JOIN #whoischan\r\n')
 
         await bob.usend('WHO #whoischan')
         who_reply = await bob.urecv()
@@ -118,7 +118,7 @@ class TestTour(AsyncTestCase, TestIRC):
 
         await bob.usend("JOIN #readthedocs")
         self.assertEqual(await bob.urecv(), textwrap.dedent("""\
-            :bob JOIN #readthedocs\r
+            :bob!~bob@::1 JOIN #readthedocs\r
             :ip6-localhost 353 bob = #readthedocs :bob\r
             :ip6-localhost 366 bob #readthedocs :End of /NAMES list.\r
             """))
@@ -130,11 +130,11 @@ class TestTour(AsyncTestCase, TestIRC):
         # Eve JOIN readthedocs
         await eve.usend("JOIN #readthedocs")
         self.assertEqual(await eve.urecv(), textwrap.dedent("""\
-            :eve JOIN #readthedocs\r
+            :eve!~eve@::1 JOIN #readthedocs\r
             :ip6-localhost 353 eve = #readthedocs :bob eve\r
             :ip6-localhost 366 eve #readthedocs :End of /NAMES list.\r
             """))
-        self.assertEqual(await bob.urecv(), ":eve JOIN #readthedocs\r\n")
+        self.assertEqual(await bob.urecv(), ":eve!~eve@::1 JOIN #readthedocs\r\n")
         self.assertIn(rtdchan, eve.channels)
         self.assertIn(eve, rtdchan.users)
 
@@ -151,7 +151,7 @@ class TestTour(AsyncTestCase, TestIRC):
         await bob.urecv()
         await eve.urecv()
         self.assertEqual(await liz.urecv(), textwrap.dedent("""\
-            :liz JOIN #readthedocs\r
+            :liz!~liz@::1 JOIN #readthedocs\r
             :ip6-localhost 353 liz = #readthedocs :bob eve liz\r
             :ip6-localhost 366 liz #readthedocs :End of /NAMES list.\r
             """))
@@ -161,15 +161,15 @@ class TestTour(AsyncTestCase, TestIRC):
         # Eve greeting the chat
         await eve.usend("PRIVMSG #readthedocs :Hi all!")
         self.assertEqual(await eve.urecv(), "")
-        self.assertEqual(await liz.urecv(), ":eve PRIVMSG #readthedocs :Hi all!\r\n")
-        self.assertEqual(await bob.urecv(), ":eve PRIVMSG #readthedocs :Hi all!\r\n")
+        self.assertEqual(await liz.urecv(), ":eve!~eve@::1 PRIVMSG #readthedocs :Hi all!\r\n")
+        self.assertEqual(await bob.urecv(), ":eve!~eve@::1 PRIVMSG #readthedocs :Hi all!\r\n")
 
         # Eve PART from readthedocs
         await eve.usend("PART #readthedocs :I'm taking a break")
         self.assertTrue(await waitfor(lambda: rtdchan not in eve.channels))
         self.assertEqual(await eve.urecv(), "")
-        self.assertEqual(await liz.urecv(), ":eve PART #readthedocs :I'm taking a break\r\n")
-        self.assertEqual(await bob.urecv(), ":eve PART #readthedocs :I'm taking a break\r\n")
+        self.assertEqual(await liz.urecv(), ":eve!~eve@::1 PART #readthedocs :I'm taking a break\r\n")
+        self.assertEqual(await bob.urecv(), ":eve!~eve@::1 PART #readthedocs :I'm taking a break\r\n")
         self.assertNotIn(rtdchan, eve.channels)
         self.assertNotIn(eve, rtdchan.users)
 
@@ -177,7 +177,7 @@ class TestTour(AsyncTestCase, TestIRC):
         await liz.usend("PRIVMSG eve :Hi, how are you ?")
         self.assertEqual(await bob.urecv(), "")
         self.assertEqual(await liz.urecv(), "")
-        self.assertEqual(await eve.urecv(), ":liz PRIVMSG eve :Hi, how are you ?\r\n")
+        self.assertEqual(await eve.urecv(), ":liz!~liz@::1 PRIVMSG eve :Hi, how are you ?\r\n")
 
         # Bob check users in the channel
         await bob.usend("NAMES #readthedocs")
@@ -191,7 +191,7 @@ class TestTour(AsyncTestCase, TestIRC):
         self.assertTrue(await bob.waitforstate(QuitState))
 
         self.assertFalse(await eve.urecv())  # she has no channel in common with bob
-        self.assertEqual(await liz.urecv(), ":bob QUIT :Quit: Bye\r\n")
+        self.assertEqual(await liz.urecv(), ":bob!~bob@::1 QUIT :Quit: Bye\r\n")
         self.assertNotIn(rtdchan, bob.channels)
         self.assertNotIn(bob, rtdchan.users)
 
