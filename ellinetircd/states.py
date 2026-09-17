@@ -130,7 +130,7 @@ class UserState(metaclass=abc.ABCMeta):
             reason = 'Quit: ' + reason
         for chan in self.user.channels:
             chan.users.remove(self.user)
-            await chan.send(f":{self.user.nick} QUIT :{reason}")
+            await chan.send(f":{self.user.hostmask} QUIT :{reason}")
             if not chan.users:
                 servlocal.channels.pop(chan.name)
         self.user.channels.clear()
@@ -318,10 +318,10 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
         if not nick_re.match(nickname):
             raise ErrErroneusNickname(nickname)
 
-        old_nick = self.user.nick
+        old_hostmask = self.user.hostmask
         async with trio.open_nursery() as nursery:
             for chan in self.user.channels:
-                nursery.start_soon(chan.send, f":{old_nick} NICK {nickname}")
+                nursery.start_soon(chan.send, f":{old_hostmask} NICK {nickname}")
 
         self.user.nick = nickname
 
@@ -345,7 +345,7 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
             self.user.channels.add(chan)
 
             # Send JOIN response to all
-            await chan.send(f":{self.user.nick} JOIN {channel}")
+            await chan.send(f":{self.user.hostmask} JOIN {channel}")
 
             # Send NAMES list to joiner
             await self.NAMES(channel)
@@ -371,9 +371,9 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
                 ellinetircd.update_status()
 
             if reason:
-                await chan.send(f":{self.user.nick} PART {channel} :{reason}")
+                await chan.send(f":{self.user.hostmask} PART {channel} :{reason}")
             else:
-                await chan.send(f":{self.user.nick} PART {channel}")
+                await chan.send(f":{self.user.hostmask} PART {channel}")
 
     @command
     async def NAMES(self, channel: str) -> None:
@@ -428,7 +428,7 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
                 continue
 
             await chan_or_user.send(
-                f":{self.user.nick} PRIVMSG {target} :{text}",
+                f":{self.user.hostmask} PRIVMSG {target} :{text}",
                 skipusers={self.user}
             )
 

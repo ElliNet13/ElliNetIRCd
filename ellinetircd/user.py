@@ -88,6 +88,11 @@ class User:
     @property
     def host(self) -> str:
         return self._addr[0]
+
+    @property
+    def hostmask(self) -> str:
+        """ Full IRC source mask: nick!user@host, used as message prefix. """
+        return f"{self._nick}!~{self._nick}@{self.host}"
     
     @property
     def realname(self) -> Optional[str]:
