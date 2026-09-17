@@ -55,7 +55,12 @@ class User:
         self.stream = stream
         self._nursery = nursery
         self._nick: Optional[str] = None
-        self._addr = stream.socket.getpeername()
+        addr = stream.socket.getpeername()
+        # A real TCP peer address is an (ip, port, ...) tuple. Some
+        # streams (e.g. BotUser's socketpair()-backed stream) have no
+        # real peer and return something that isn't usable as one, so
+        # fall back to a placeholder rather than let __str__() blow up.
+        self._addr = addr if isinstance(addr, tuple) and len(addr) >= 2 else ('127.0.0.0', 0)
         self._realname: Optional[str] = None
         self.state: AnyState = None
         self.state = (PasswordState if servlocal.pwd else ConnectedState)(self)
