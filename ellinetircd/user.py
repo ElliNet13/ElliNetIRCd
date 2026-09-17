@@ -96,7 +96,10 @@ class User:
     @nick.setter
     def nick(self, nick: Optional[str]) -> None:
         servlocal = ellinetircd.servlocal.get()
-        servlocal.users[nick] = servlocal.users.pop(self._nick, self)
+        if self._nick is not None:
+            servlocal.users.pop(self._nick, None)
+        if nick is not None:
+            servlocal.users[nick] = self
         self._nick = nick
 
     @realname.setter
