@@ -16,7 +16,6 @@ from socket import gethostname, gethostbyname
 import ellinetircd
 from ellinetircd.config import config as cfg
 from ellinetircd.server import Server
-from ellinetircd.utils import install_templates
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,6 @@ def main() -> None:
     finally:
         logging.shutdown()
 
-install_templates()
 
 # Dummy argparse, used only for --help and --version
 parser = argparse.ArgumentParser(

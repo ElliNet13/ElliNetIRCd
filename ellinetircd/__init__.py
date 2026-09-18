@@ -33,6 +33,8 @@ import ellinetircd.user
 import ellinetircd.utils
 import ellinetircd.shared
 
+ellinetircd.utils.install_templates()
+
 def update_status() -> None:
     sl = servlocal.get()
     ellinetircd.sdnotify.status(
