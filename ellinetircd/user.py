@@ -11,7 +11,7 @@ import re
 import trio
 import uuid
 import yaml
-from typing import List, Optional, Set, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Set, Union, Any, overload
 
 import ellinetircd
 from ellinetircd.config import config as cfg
@@ -26,11 +26,48 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger('ellinetircd.user')
 
-message_re = re.compile(r"""
-    (?P<command>[A-Z]+)
-    (?P<middle>(?:\ [^\ :]+)*)
-    (?:\ :(?P<trailing>.+))?
-""", re.VERBOSE)
+
+class message_match():
+    def __init__(self, match: re.Match[str]) -> None:
+        self._match = match
+
+    def group(self, *groups: int | str) -> Any:
+        result = self._match.group(*groups)
+
+        if len(groups) == 1 and groups[0] == "command":
+            if isinstance(result, str):
+                return result.upper()
+
+        elif len(groups) > 1:
+            return tuple(
+                value.upper()
+                if group == "command" and isinstance(value, str)
+                else value
+                for group, value in zip(groups, result)
+            )
+
+        return result
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._match, name)
+
+class message_regex:
+    def __init__(self) -> None:
+        self._regex = re.compile(r"""
+            (?P<command>[A-Za-z]+)
+            (?P<middle>(?:\ [^\ :]+)*)
+            (?:\ :(?P<trailing>.+))?
+        """, re.VERBOSE)
+
+    def match(self, message: str) -> message_match | None:
+        match = self._regex.match(message)
+
+        if match is None:
+            return None
+
+        return message_match(match)
+
+message_re = message_regex()
 
 # Nicknames that users should not use
 _unsafe_nicks = {
