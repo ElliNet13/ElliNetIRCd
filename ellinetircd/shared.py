@@ -1,0 +1,1 @@
+usermodes = set("or") # Operator, Registered

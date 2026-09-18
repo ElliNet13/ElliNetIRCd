@@ -10,13 +10,16 @@ import logging
 import re
 import trio
 import uuid
+import yaml
 from typing import List, Optional, Set, Union, TYPE_CHECKING
+import traceback
 
 import ellinetircd
 from ellinetircd.config import config as cfg
 from ellinetircd.exceptions import IRCException, Disconnect, BotException
 from ellinetircd.states import PasswordState, ConnectedState, QuitState, AnyState
 import ellinetircd.user
+from ellinetircd.utils import send_system_message, find_user_from_nick
 
 if TYPE_CHECKING:
     from ellinetircd.server import ServLocal
@@ -48,6 +51,14 @@ _safenets = [
     ipaddress.ip_network('127.0.0.0/8'),
 ]
 
+def load_opers():
+    with open("opers.yaml", "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    return config
+
+def save_opers(opers):
+    with open("opers.yaml", "w", encoding="utf-8") as f:
+        yaml.safe_dump(opers, f)
 
 class User:
     def __init__(self, stream: trio.SocketStream, nursery: trio.Nursery) -> None:
@@ -68,6 +79,7 @@ class User:
         self._ping_timer = trio.CancelScope()  # dummy
         self._send_lock = trio.StrictFIFOLock()
         self.caps: Set[str] = set()
+        self.modes = set()
 
     def __str__(self) -> str:
         if self.nick:
@@ -107,6 +119,17 @@ class User:
         if nick is not None:
             servlocal.users[nick] = self
         self._nick = nick
+        if nick is None:
+            return
+        opers = load_opers()["opers"]
+        if nick in opers:
+            self.modes.add('o') # they be an operator
+            self._nursery.start_soon(send_system_message, self, "Your nickname has been registered as an operator. You have been given the o mode.")
+            # once NickServ is added this should alert the user if they are not registered (mode r)
+        else:
+            if "o" in self.modes:
+                self.modes.remove("o")
+                self._nursery.start_soon(send_system_message, self, "You have changed to a nickname that is not registered as an operator. You have been removed the o mode.")
 
     @realname.setter
     def realname(self, realname: str) -> None:
@@ -194,6 +217,7 @@ class User:
                 except IRCException as exc:
                     logger.warning("Command %s sent by %s failed, code: %s",
                         args[0], self, exc.code)
+                    traceback.print_exc()
                     await self.send(exc.args[0])
 
     async def terminate(self, kick_msg: str = "Connection terminated by host") -> None:
@@ -222,6 +246,7 @@ class User:
         skipusers: Optional[Set["ellinetircd.user.User"]] = None,
     ) -> None:
         """ Send many messages to the user. """
+        
         if isinstance(messages, str):
             messages = [messages]
 
@@ -239,6 +264,9 @@ class BotUser(User):
         self._client = trio.SocketStream(client_socket)
         self._closed = False
         self._terminated = False
+
+        self.modes.add("o") # All bots are operators
+        # Bots should also be registered, but that should be done later
  
     async def __aenter__(self):
         self._nursery.start_soon(self.bot_serve)
@@ -315,7 +343,14 @@ class BotUser(User):
         channel = ",".join(channels) if isinstance(channels, list) else channels
         await self.usend(f"PART {channel}" + (f" :{reason}" if reason else ""))
  
-    async def send_message(self, channel: str, message: str) -> None:
+    async def send_message(self, channel: str|User, message: str) -> None:
+        if isinstance(channel, User):
+            if channel.nick is None:
+                logger.warning("Cannot send message to %s: no nick", channel)
+                return
+            else:
+                await self.usend(f"PRIVMSG {channel.nick} :{message}")
+            return
         await self.usend(f"PRIVMSG {channel} :{message}")
 
     async def raw_messages(self):
@@ -354,7 +389,13 @@ class BotUser(User):
 
             target, message = rest.split(" :", 1)
 
-            user = prefix.removeprefix(":").split("!", 1)[0]
+            nick = prefix.removeprefix(":").split("!", 1)[0]
+
+            user = find_user_from_nick(nick)
+
+            if user is None:
+                logger.warning("Received PRIVMSG from unknown user %s", nick)
+                continue
 
             channel = target if target.startswith(("#", "&")) else None
 

@@ -16,6 +16,7 @@ from socket import gethostname, gethostbyname
 import ellinetircd
 from ellinetircd.config import config as cfg
 from ellinetircd.server import Server
+from ellinetircd.utils import install_templates
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +56,13 @@ def main() -> None:
     finally:
         logging.shutdown()
 
+install_templates()
+
 # Dummy argparse, used only for --help and --version
 parser = argparse.ArgumentParser(
     prog=ellinetircd.__name__,
     usage=f"{sys.executable} -m {ellinetircd.__name__}",
-    description="single-server minimalist IRC",
+    description="ElliNetIRCd, a IRC server.",
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog=textwrap.dedent(f"""\
         environment variables:

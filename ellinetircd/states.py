@@ -11,7 +11,6 @@ __all__ = [
 ]
 
 import abc
-import functools
 import inspect
 import logging
 import re
@@ -24,6 +23,8 @@ from ellinetircd.exceptions import *
 import ellinetircd.user
 from ellinetircd.PluginAPI import CommandContext
 import ellinetircd.plugins
+from ellinetircd.utils import find_user_from_nick
+from ellinetircd.shared import usermodes
 
 if TYPE_CHECKING:
     from ellinetircd.server import ServLocal
@@ -247,10 +248,10 @@ class ConnectedState(UserState):
                 host=servlocal.host,
                 nick=self.user.nick,
                 version=ellinetircd.__version__,
-                # RPL_MYINFO (004), advertise availables modes (none)
-                usermodes="",
+                # RPL_MYINFO (004), advertise availables modes
+                usermodes="".join(usermodes),
                 chanmodes="",
-                # RPL_ISUPPORT (005), advertise server capabilities (not much)
+                # RPL_ISUPPORT (005), advertise server capabilities
                 cap1 = "AWAYLEN=0 CASEMAPPING=ascii CHANLIMIT=# CHANTYPES=#",
                 cap2 = "HOSTLEN=63 KICKLEN=0 MAXLIST=b: MAXTARGETS=12 MODES=0 NICKLEN=15 STATUSMSG=@+ TOPICLEN=0 USERLEN=15"
             )
@@ -541,22 +542,78 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
         host = servlocal.host
         nick = self.user.nick
 
-        # Replace IF I add a MODE system
-
         # User MODE query
         if not target or target == self.user.nick:
+            modes = ''.join(sorted(self.user.modes))
             await self.user.send(
-                f":{host} 221 {nick} +"
+                f":{host} 221 {nick} +{modes}"
             )
             return
 
-        # Channel MODE query
-        if target.startswith("#") or target.startswith("&"):
-            if target not in servlocal.channels:
-                await self.user.send(ErrNoSuchChannel.format(target))
+        # User MODE
+        user = find_user_from_nick(target)
+
+        if user:
+            # MODE <nick> - query modes
+            if not params:
+                modes = ''.join(sorted(user.modes))
+                await self.user.send(
+                    f":{host} 221 {nick} +{modes}"
+                )
                 return
 
-            # Placeholder: pretend all channels are "+nt"
+            # Only IRC operators can change modes
+            if "o" not in self.user.modes:
+                await self.user.send(
+                    f":{host} 481 {nick} :Permission Denied- You're not an IRC operator"
+                )
+                return
+
+            mode_string = params[0]
+            adding = True
+            changed = []
+
+            for mode in mode_string:
+                if mode == '+':
+                    adding = True
+                    continue
+
+                if mode == '-':
+                    adding = False
+                    continue
+
+                # Ignore unknown modes for now
+                if mode not in usermodes:
+                    await self.user.send(
+                        f":{host} 472 {nick} {mode} :is unknown mode char to me"
+                    )
+                    continue
+
+                if adding:
+                    if mode not in user.modes:
+                        user.modes.add(mode)
+                        changed.append(f"+{mode}")
+                else:
+                    if mode in user.modes:
+                        user.modes.remove(mode)
+                        changed.append(f"-{mode}")
+
+            if changed:
+                await self.user.send(
+                    f":{self.user.nick}!{self.user.nick}@{self.user.host} "
+                    f"MODE {target} {''.join(changed)}"
+                )
+
+            return
+
+        # Channel MODE query (Channels don't have modes yet)
+        if target.startswith("#") or target.startswith("&"):
+            if target not in servlocal.channels:
+                await self.user.send(
+                    ErrNoSuchChannel.format(target)
+                )
+                return
+
             await self.user.send(
                 f":{host} 324 {nick} {target} +nt"
             )
@@ -565,7 +622,7 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
             )
             return
 
-        # Unknown target (nick etc.)
+        # Unknown target
         await self.user.send(
             ErrNoSuchNick.format(target)
         )

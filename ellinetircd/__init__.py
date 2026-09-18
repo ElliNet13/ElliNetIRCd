@@ -30,7 +30,8 @@ import ellinetircd.server
 import ellinetircd.sdnotify
 import ellinetircd.states
 import ellinetircd.user
-
+import ellinetircd.utils
+import ellinetircd.shared
 
 def update_status() -> None:
     sl = servlocal.get()

@@ -7,7 +7,7 @@ import unittest
 import ellinetircd
 from ellinetircd.states import *
 from .common import AsyncTestCase, TestIRC, waitfor
-
+from ellinetircd.shared import usermodes
 
 class TestProtocole(AsyncTestCase, TestIRC):
     async def atest_nick_collision(self, nursery) -> None:
@@ -93,7 +93,7 @@ class TestTour(AsyncTestCase, TestIRC):
             :ip6-localhost 001 bob :Welcome to the Internet Relay Network bob\r
             :ip6-localhost 002 bob :Your host is ip6-localhost, running version {ellinetircd.__version__}\r
             :ip6-localhost 003 bob :The server was created someday\r
-            :ip6-localhost 004 bob ellinetircd {ellinetircd.__version__}  \r
+            :ip6-localhost 004 bob ellinetircd {ellinetircd.__version__} {"".join(usermodes)} \r
             :ip6-localhost 005 bob AWAYLEN=0 CASEMAPPING=ascii CHANLIMIT=# CHANTYPES=# :are supported by this server\r
             :ip6-localhost 005 bob HOSTLEN=63 KICKLEN=0 MAXLIST=b: MAXTARGETS=12 MODES=0 NICKLEN=15 STATUSMSG=@+ TOPICLEN=0 USERLEN=15 :are supported by this server\r
             :ip6-localhost 422 bob :MOTD File is missing\r

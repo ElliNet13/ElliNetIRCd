@@ -4,5 +4,5 @@
 
 
 ## Features (only add these in a update to a MINOR release)
-[ ] Add admin system so not everyone can use AdminServ
 [ ] Add PLUGIN_MOD type for plugins that modify other plugins
+[ ] Recreate NickServ to make it more secure

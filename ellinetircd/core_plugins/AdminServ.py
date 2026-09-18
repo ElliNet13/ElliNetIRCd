@@ -1,10 +1,9 @@
 from ellinetircd.PluginAPI import GenericContext, PluginType
+from ellinetircd.utils import shutdown
 from ellinetircd.user import BotUser
 import trio
 import logging
 import shlex
-import os
-import signal
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +19,14 @@ async def setup(context: GenericContext):
                 if channel:
                     continue
 
+                if not "o" in user.modes:
+                    await bot.send_message(user, "You must be an operator to use AdminServ.")
+                    continue
+
                 args = shlex.split(message)
                 match args[0].lower():
                     case "shutdown":
-                        os.kill(os.getpid(), signal.SIGINT)
+                        await shutdown()
                         break
 
                     case _:
