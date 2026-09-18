@@ -8,13 +8,13 @@ import shlex
 logger = logging.getLogger(__name__)
 
 PLUGIN_TYPE = PluginType.GENERIC
-PLUGIN_NAME = "AdminServ"
-PLUGIN_ID = "AdminServ"
+PLUGIN_NAME = "OperServ"
+PLUGIN_ID = "OperServ"
 
 async def setup(context: GenericContext):
     async with trio.open_nursery() as nursery:
         async with BotUser(nursery) as bot:
-            await bot.register("AdminServ")
+            await bot.register("OperServ")
             async for user, channel, message in bot.messages():
                 if channel:
                     continue
