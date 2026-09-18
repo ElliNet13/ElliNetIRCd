@@ -146,4 +146,4 @@ cython_debug/
 
 # ElliNetIRCd data
 plugins/
-opers.yaml
+/opers.yaml

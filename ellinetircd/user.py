@@ -217,7 +217,8 @@ class User:
                 except IRCException as exc:
                     logger.warning("Command %s sent by %s failed, code: %s",
                         args[0], self, exc.code)
-                    traceback.print_exc()
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.exception("Something went wrong")
                     await self.send(exc.args[0])
 
     async def terminate(self, kick_msg: str = "Connection terminated by host") -> None:
