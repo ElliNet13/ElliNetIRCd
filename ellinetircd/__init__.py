@@ -32,6 +32,7 @@ import ellinetircd.states
 import ellinetircd.user
 import ellinetircd.utils
 import ellinetircd.shared
+import ellinetircd.accounts
 
 ellinetircd.utils.install_templates()
 

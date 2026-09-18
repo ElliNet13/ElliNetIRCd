@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     import ellinetircd.plugins
     from ellinetircd.user import User
 
-PluginType = Enum("PluginType", ["LANGUAGE", "COMMAND", "GENERIC"])
+PluginType = Enum("PluginType", ["LANGUAGE", "COMMAND", "COMMAND_INTERPRETER", "GENERIC"])
 
 # Classes
 class ContextBase:

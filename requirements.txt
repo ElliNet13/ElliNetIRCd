@@ -5,3 +5,4 @@ sortedcontainers==2.4.0
 trio==0.34.0
 lupa
 pyyaml
+argon2-cffi

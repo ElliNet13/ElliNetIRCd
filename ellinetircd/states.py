@@ -537,13 +537,13 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
         )
 
     @command
-    async def MODE(self, target: Optional[str] = None, *params: str) -> None:
+    async def MODE(self, target: Optional[str] = None, modes: Optional[str] = None) -> None:
         servlocal = ellinetircd.servlocal.get()
         host = servlocal.host
         nick = self.user.nick
 
         # User MODE query
-        if not target or target == self.user.nick:
+        if not target:
             modes = ''.join(sorted(self.user.modes))
             await self.user.send(
                 f":{host} 221 {nick} +{modes}"
@@ -555,7 +555,7 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
 
         if user:
             # MODE <nick> - query modes
-            if not params:
+            if not modes:
                 modes = ''.join(sorted(user.modes))
                 await self.user.send(
                     f":{host} 221 {nick} +{modes}"
@@ -569,7 +569,7 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
                 )
                 return
 
-            mode_string = params[0]
+            mode_string = modes
             adding = True
             changed = []
 

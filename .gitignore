@@ -147,3 +147,4 @@ cython_debug/
 # ElliNetIRCd data
 plugins/
 /opers.yaml
+accounts.db

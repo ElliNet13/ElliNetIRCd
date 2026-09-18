@@ -1,6 +1,6 @@
 from ellinetircd.PluginAPI import GenericContext, PluginType
 from ellinetircd.utils import shutdown
-from ellinetircd.user import BotUser
+from ellinetircd.user import BotUser, _unsafe_nicks
 import trio
 import logging
 import shlex
@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 PLUGIN_TYPE = PluginType.GENERIC
 PLUGIN_NAME = "OperServ"
 PLUGIN_ID = "OperServ"
+
+_unsafe_nicks.add("OperServ")
 
 async def setup(context: GenericContext):
     async with trio.open_nursery() as nursery:
@@ -24,8 +26,12 @@ async def setup(context: GenericContext):
                     continue
 
                 args = shlex.split(message)
-                match args[0].lower():
-                    case "shutdown":
+                match args[0].upper():
+                    case "HELP":
+                        await bot.send_message(user, "Available commands:")
+                        await bot.send_message(user, "/msg OperServ shutdown - Shuts down the server")
+                    
+                    case "SHUTDOWN":
                         await shutdown()
                         break
 

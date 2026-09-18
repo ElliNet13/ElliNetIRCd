@@ -12,7 +12,6 @@ import trio
 import uuid
 import yaml
 from typing import List, Optional, Set, Union, TYPE_CHECKING
-import traceback
 
 import ellinetircd
 from ellinetircd.config import config as cfg
@@ -20,6 +19,7 @@ from ellinetircd.exceptions import IRCException, Disconnect, BotException
 from ellinetircd.states import PasswordState, ConnectedState, QuitState, AnyState
 import ellinetircd.user
 from ellinetircd.utils import send_system_message, find_user_from_nick
+from ellinetircd.accounts import get_connection, does_user_exist
 
 if TYPE_CHECKING:
     from ellinetircd.server import ServLocal
@@ -80,6 +80,8 @@ class User:
         self._send_lock = trio.StrictFIFOLock()
         self.caps: Set[str] = set()
         self.modes = set()
+        self.database_connection = get_connection()
+        self.database_cursor = self.database_connection.cursor()
 
     def __str__(self) -> str:
         if self.nick:
@@ -123,9 +125,11 @@ class User:
             return
         opers = load_opers()["opers"]
         if nick in opers:
-            self.modes.add('o') # they be an operator
-            self._nursery.start_soon(send_system_message, self, "Your nickname has been registered as an operator. You have been given the o mode.")
-            # once NickServ is added this should alert the user if they are not registered (mode r)
+            if does_user_exist(self.database_cursor, nick):
+                self._nursery.start_soon(send_system_message, self, "Your nickname has been registered as an operator. You will be given the o mode once you login with NickServ.")
+            else:
+                self.modes.add('o') # they be an operator
+                self._nursery.start_soon(send_system_message, self, "Your nickname has been registered as an operator. You have been given the o mode.")
         else:
             if "o" in self.modes:
                 self.modes.remove("o")
