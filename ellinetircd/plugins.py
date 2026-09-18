@@ -119,10 +119,11 @@ def _load_package_plugins(package_name: str) -> list[ModuleType]:
         return modules
 
     for module_info in pkgutil.walk_packages(package_path, prefix=f"{package_name}."):
-        leaf_name = module_info.name.rsplit(".", 1)[-1]
-        if leaf_name.startswith("_"):
+        relative_parts = module_info.name[len(package_name) + 1:].split(".")
+        if any(part.startswith("_") for part in relative_parts):
             continue
-
+        if module_info.ispkg:
+            continue
         try:
             modules.append(importlib.import_module(module_info.name))
         except Exception as exc:
