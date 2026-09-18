@@ -21,7 +21,7 @@ async def setup(context: GenericContext):
                     continue
 
                 args = shlex.split(message)
-                match args[0].lower:
+                match args[0].lower():
                     case "shutdown":
                         os.kill(os.getpid(), signal.SIGINT)
                         break
