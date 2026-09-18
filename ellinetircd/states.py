@@ -118,6 +118,10 @@ class UserState(metaclass=abc.ABCMeta):
     @command
     async def PRIVMSG(self, args: str) -> None:
         raise ErrUnknownError(self.user, "PRIVMSG", "Called while in the wrong state.")
+
+    @command
+    async def NOTICE(self, args: str) -> None:
+        raise ErrUnknownError(self.user, "NOTICE", "Called while in the wrong state.")
     
     @command
     async def MODE(self, args: str) -> None:
@@ -430,6 +434,27 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
                 continue
 
             line = f":{self.user.hostmask} PRIVMSG {target} :{text}"
+
+            await chan_or_user.send(line, skipusers={self.user})
+
+            if "echo-message" in self.user.caps:
+                await self.user.send(line)
+
+    @command
+    async def NOTICE(self, targets: str, text: str) -> None:
+        servlocal = ellinetircd.servlocal.get()
+
+        for target in targets.split(','):
+            chan_or_user = (
+                servlocal.channels.get(target)
+                if target.startswith(('&', '#')) else
+                servlocal.users.get(target)
+            )
+
+            if not chan_or_user:
+                continue
+
+            line = f":{self.user.hostmask} NOTICE {target} :{text}"
 
             await chan_or_user.send(line, skipusers={self.user})
 
