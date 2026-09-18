@@ -67,6 +67,7 @@ class User:
         self.channels = set()
         self._ping_timer = trio.CancelScope()  # dummy
         self._send_lock = trio.StrictFIFOLock()
+        self.caps: Set[str] = set()
 
     def __str__(self) -> str:
         if self.nick:

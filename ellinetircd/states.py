@@ -171,6 +171,7 @@ class ConnectedState(UserState):
             "cap-notify",
             "multi-prefix",
             "chghost",
+            "echo-message",
         ]
         caps = " ".join(CAPS)
 
@@ -189,6 +190,7 @@ class ConnectedState(UserState):
                     f":{host} CAP * NAK :{' '.join(unknown)}"
                 )
             else:
+                self.user.caps.update(requested)
                 await self.user.send(
                     f":{host} CAP * ACK :{' '.join(requested)}"
                 )
@@ -427,10 +429,12 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
                 await self.user.send(ErrNoSuchNick.format(target))
                 continue
 
-            await chan_or_user.send(
-                f":{self.user.hostmask} PRIVMSG {target} :{text}",
-                skipusers={self.user}
-            )
+            line = f":{self.user.hostmask} PRIVMSG {target} :{text}"
+
+            await chan_or_user.send(line, skipusers={self.user})
+
+            if "echo-message" in self.user.caps:
+                await self.user.send(line)
 
     @command
     async def WHO(self, target: str = "*") -> None:
