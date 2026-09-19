@@ -5,6 +5,8 @@ A python asynchronous IRC server based on aioirc.
 
 ### Installation and Usage
 
+This is a shortened version of the [a page from the Wiki](https://github.com/ElliNet13/ElliNetIRCd/wiki/setup-first-server). Please see the Wiki if this is your first time installing this server.
+
 Download and install the latest stable version using pip.
 ```bash
 python -m pip install ellinetircd
@@ -23,27 +25,21 @@ python -m ellinetircd
 
 For other env vars check `python -m ellinetircd --help`.
 
-## Plugins
-As of v1.1.0 there is now support for plugins!
-As of v1.2.0 there is now support for other languages then python!
-Check the test plugins for example plugins.
+## More info
+Check out the [wiki](https://github.com/ElliNet13/ellinetircd/wiki)
 
-### Supported plugin types
-These are all supported plugins, if it is checked then it has been fully added, if its not checked it is still in dev.
-- [x] Language support plugins (LANGUAGE) [As of v1.2.0]
-- [x] Command plugins (COMMAND) [As of v1.1.0]
-- [x] Generic plugins (GENERIC) [As of v1.2.0]
+## Start testing server
 
-### Supported plugin languages
-These are all supported plugins languages, if it is checked then it has been fully added, if its not checked it is still in dev.
-- [x] Python [As of v1.1.0]
-- [x] Lua [As of v1.2.0]
+### Powershell
+```powershell
+$env:HOST="0.0.0.0"
+$env:LOGLEVEL="DEBUG"
+python -m ellinetircd
+```
 
-### Important notes
-- Lua does not support async functions yet. (Setup in lua gets a wrapper function to make it async.)
-- Lua can not be used to make a bot. (Due to missing async.)
-
-### Plugin search paths
-- ./plugins
-- ellinetircd.core_plugins
-- ellinetircd.test_plugins (if logging is set to debug)
+### Bash
+```bash
+export HOST="0.0.0.0"
+export LOGLEVEL="DEBUG"
+python -m ellinetircd
+```
