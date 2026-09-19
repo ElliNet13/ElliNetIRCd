@@ -32,3 +32,23 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test
       run: python -m unittest
+
+    # The following steps test the build and installation of the package, similar to what is done on PyPI
+    - name: Build
+      run: python -m build
+
+    - name: Test sdist
+      run: |
+        mkdir ellinetircd-sdist
+        tar -xf dist/*.tar.gz -C ellinetircd-sdist
+        cd ellinetircd-sdist/*/
+        python -m venv venv-sdist
+        venv-sdist/bin/pip install -e .
+        venv-sdist/bin/python -m unittest
+        cd ../..
+
+    - name: Test wheel
+      run: |
+        python -m venv venv-wheel
+        venv-wheel/bin/pip install dist/*.whl
+        venv-wheel/bin/python -m unittest
