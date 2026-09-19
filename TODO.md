@@ -4,5 +4,5 @@
 
 
 ## Features (only add these in a update to a MINOR release)
-[ ] Add kicking, banning, etc
-[ ] Add way to kick people stealing nickname `GHOST <nickname> <password>`
+- [ ] Add kicking, banning, etc
+- [ ] Add way to kick people stealing nickname `GHOST <nickname> <password>`
