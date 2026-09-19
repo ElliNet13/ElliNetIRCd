@@ -16,7 +16,8 @@ import logging
 import re
 import textwrap
 import trio
-from typing import Any, Callable, Optional, TypeVar, TYPE_CHECKING
+import types
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union, get_args, get_origin, get_type_hints
 
 import ellinetircd
 from ellinetircd.exceptions import *
@@ -38,6 +39,16 @@ chan_re = re.compile(r"[&#][a-zA-Z0-9\-_]{1,49}")
 
 type AnyState = UserState | ConnectedState | PasswordState | RegisteredState | QuitState | None
 
+def _is_nullable(annotation: Any) -> bool:
+    """ True for Optional[X], Union[X, None], X | None (and unresolved string forms of them). """
+    if annotation is None or annotation is type(None):
+        return True
+    if isinstance(annotation, str):  # unresolved forward reference
+        return "None" in annotation or "Optional" in annotation
+    if get_origin(annotation) in (Union, types.UnionType):
+        return any(_is_nullable(arg) for arg in get_args(annotation))
+    return False
+
 def command(func: FuncType) -> FuncType:
     """ Denote the function can be triggered by an IRC message """
     func.command = True
@@ -52,6 +63,8 @@ class UserState(metaclass=abc.ABCMeta):
     def __str__(self) -> str:
         return type(self).__name__[:-5]
 
+
+    # inside UserState:
     async def dispatch(self, cmd: str, *params: str) -> None:
         logger.debug('Dispatch to %s: %s', cmd, params)
         meth = getattr(self, cmd, None)
@@ -60,15 +73,57 @@ class UserState(metaclass=abc.ABCMeta):
 
         sign = inspect.signature(meth)
         try:
-            sign.bind(*params)
-        except TypeError:
-            meth_params_cnt = len(inspect.signature(meth).parameters.values())
-            if len(params) < meth_params_cnt:
-                raise ErrNeedMoreParams(cmd)
-            else:
-                raise ErrUnknownError(self.user, cmd, f"Couldn't bind {params} to {sign}.")
+            hints = get_type_hints(meth)
+        except Exception:  # unresolvable forward refs etc, fall back to raw annotations
+            hints = {}
 
-        await meth(*params)
+        # Collect positional parameters (self is already stripped from bound methods)
+        positional: list[inspect.Parameter] = []
+        varargs_name: Optional[str] = None
+        for p in sign.parameters.values():
+            if p.kind is p.VAR_POSITIONAL:
+                varargs_name = p.name
+            elif p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD):
+                positional.append(p)
+
+        def is_optional(p: inspect.Parameter) -> bool:
+            return p.default is not p.empty or _is_nullable(hints.get(p.name, p.annotation))
+
+        # A param is only required if it, or a later one, isn't optional
+        required = max((i for i, p in enumerate(positional) if not is_optional(p)), default=-1) + 1
+        maximum = None if varargs_name else len(positional)
+
+        usage = " ".join(
+            [cmd]
+            + [f"<{p.name}>" if i < required else f"[{p.name}]" for i, p in enumerate(positional)]
+            + ([f"[{varargs_name}...]"] if varargs_name else [])
+        )
+
+        if len(params) < required:
+            missing = ", ".join(p.name for p in positional[len(params):required])
+            logger.debug("%s missing parameters: %s (usage: %s)", cmd, missing, usage)
+            raise ErrNeedMoreParams(cmd)  # 461, the standard numeric for this
+
+        if maximum is not None and len(params) > maximum:
+            raise ErrUnknownError(
+                self.user, cmd,
+                f"Too many parameters: got {len(params)}, expected at most {maximum}. Usage: {usage}",
+            )
+
+        # Fill omitted Optional / "| None" params that have no default with None.
+        # Params with real defaults are left alone so Python applies them.
+        args: list[Optional[str]] = list(params)
+        for p in positional[len(args):]:
+            if p.default is not p.empty:
+                break
+            args.append(None)
+
+        try:
+            sign.bind(*args)
+        except TypeError as exc:  # anything left over (e.g. required keyword-only params)
+            raise ErrUnknownError(self.user, cmd, f"Invalid parameters ({exc}). Usage: {usage}")
+
+        await meth(*args)
 
     @command
     async def PING(self, token: str) -> None:
@@ -97,7 +152,7 @@ class UserState(metaclass=abc.ABCMeta):
         raise ErrUnknownError(self.user, "WHO", "Called while in the wrong state.")
     
     @command
-    async def WHOIS(self, channel: str) -> None:
+    async def WHOIS(self, channel: str, _: Optional[str]) -> None:
         raise ErrUnknownError(self.user, "WHOIS", "Called while in the wrong state.")
 
     @command
@@ -510,7 +565,7 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
         )
 
     @command
-    async def WHOIS(self, target: str) -> None:
+    async def WHOIS(self, target: str, _: Optional[str]) -> None:
         servlocal = ellinetircd.servlocal.get()
         host = servlocal.host
         requester = self.user.nick
