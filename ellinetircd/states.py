@@ -637,6 +637,12 @@ class RegisteredState(UserState, metaclass=RegisteredStateMeta):
                     adding = False
                     continue
 
+                if mode == "o" and "B" in user.modes and not adding:
+                    # Bots cannot be demoted
+                    await self.user.send(
+                        f":{host} 550"
+                    )   
+
                 # Ignore unknown modes for now
                 if mode not in usermodes:
                     await self.user.send(

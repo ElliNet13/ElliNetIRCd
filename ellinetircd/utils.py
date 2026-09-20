@@ -15,10 +15,12 @@ if TYPE_CHECKING:
     from ellinetircd.user import User
     from ellinetircd.server import ServLocal
 
-async def send_system_message(user: "User", messages: str|list[str], error: bool = False) -> None:
+async def send_system_message(user: "User", messages: str|list[str], error: bool = False, custom_numeric: Optional[int] = None) -> None:
     servlocal: "ServLocal" = ellinetircd.servlocal.get()
 
-    message_type = "ERROR" if error else "NOTICE"
+    message_type = (
+        custom_numeric if custom_numeric is not None else "400"
+    ) if error else "NOTICE"
 
     if type(messages) == str:
         messages_new = [messages]
