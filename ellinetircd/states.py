@@ -136,51 +136,51 @@ class UserState(metaclass=abc.ABCMeta):
 
 
     @command
-    async def USER(self, username: str, _zero: str, _star: str, realname: str) -> None:
+    async def USER(self, *_) -> None:
         raise ErrUnknownError(self.user, "USER", "Called while in the wrong state.")
 
     @command
-    async def PASS(self, password: str) -> None:
+    async def PASS(self, *_) -> None:
         raise ErrUnknownError(self.user, "PASS", "Called while in the wrong state.")
 
     @command
-    async def NICK(self, nickname: str) -> None:
+    async def NICK(self, *_) -> None:
         raise ErrUnknownError(self.user, "NICK", "Called while in the wrong state.")
     
     @command
-    async def WHO(self, channel: str) -> None:
+    async def WHO(self, *_) -> None:
         raise ErrUnknownError(self.user, "WHO", "Called while in the wrong state.")
     
     @command
-    async def WHOIS(self, channel: str, _: Optional[str]) -> None:
+    async def WHOIS(self, *_) -> None:
         raise ErrUnknownError(self.user, "WHOIS", "Called while in the wrong state.")
 
     @command
-    async def JOIN(self, channels: str) -> None:
+    async def JOIN(self, *_) -> None:
         raise ErrUnknownError(self.user, "JOIN", "Called while in the wrong state.")
 
     @command
-    async def PART(self, channels: str, reason: Optional[str] = None) -> None:
+    async def PART(self, *_) -> None:
         raise ErrUnknownError(self.user, "PART", "Called while in the wrong state.")
 
     @command
-    async def NAMES(self, channel: str) -> None:
+    async def NAMES(self, *_) -> None:
         raise ErrUnknownError(self.user, "NAMES", "Called while in the wrong state.")
 
     @command
-    async def LIST(self) -> None:
+    async def LIST(self, *_) -> None:
         raise ErrUnknownError(self.user, "LIST", "Called while in the wrong state.")
 
     @command
-    async def PRIVMSG(self, args: str) -> None:
+    async def PRIVMSG(self, *_) -> None:
         raise ErrUnknownError(self.user, "PRIVMSG", "Called while in the wrong state.")
 
     @command
-    async def NOTICE(self, args: str) -> None:
+    async def NOTICE(self, *_) -> None:
         raise ErrUnknownError(self.user, "NOTICE", "Called while in the wrong state.")
     
     @command
-    async def MODE(self, args: str) -> None:
+    async def MODE(self, *_) -> None:
         raise ErrUnknownError(self.user, "MODE", "Called while in the wrong state.")
 
     @command
