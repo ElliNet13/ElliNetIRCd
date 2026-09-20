@@ -71,3 +71,22 @@ async def shutdown() -> None:
         await send_system_message(user, "Server is shutting down", error=True)
     os.kill(os.getpid(), signal.SIGINT)
     return
+
+class Fuse:
+    def __init__(self) -> None:
+        self.__blown = False
+
+    def __bool__(self) -> bool:
+        return not self.__blown
+
+    def __call__(self) -> bool:
+        is_blown = self.__blown
+        self.blow()
+        return is_blown
+
+    @property
+    def blown(self) -> bool:
+        return self.__blown
+
+    def blow(self) -> None:
+        self.__blown = True

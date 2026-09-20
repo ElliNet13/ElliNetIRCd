@@ -148,3 +148,5 @@ cython_debug/
 plugins/
 /opers.yaml
 accounts.db
+*.key
+*.enc

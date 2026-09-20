@@ -1,9 +1,13 @@
+from ellinetircd.encryption import open_encrypted, generate_password
 from importlib.resources import files
 from argon2 import PasswordHasher
 from typing import Optional
 from pathlib import Path
+import logging
 import sqlite3
 import time
+
+logger = logging.getLogger("ellinetircd.encryption")
 
 DATABASE_PATH = Path("accounts.db")
 password_hasher = PasswordHasher()
@@ -46,3 +50,19 @@ def verify_password(cur: sqlite3.Cursor, name: str, password: str) -> bool:
     if password_hash is None:
         raise UserNotFoundError
     return password_hasher.verify(password_hash, password)
+
+def add_bot_user(cur: sqlite3.Cursor, bot_nick: str):
+    if not does_user_exist(cur, bot_nick):
+        logger.debug("Adding bot user %s", bot_nick)
+        # Check if bot password exists
+        with open_encrypted("bot_password.enc", "r+", encoding="utf-8") as f:
+            password = f.read()
+            assert isinstance(password, str)
+            if password == "":
+                logger.info("Generating bot password")
+                password = generate_password()
+                f.seek(0)
+                f.write(password)
+                f.truncate()
+        add_user(cur, bot_nick, password)
+        logger.debug("Added bot user %s", bot_nick)

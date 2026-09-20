@@ -24,21 +24,21 @@ logger.setLevel(cfg.LOGLEVEL)
 servlocal = contextvars.ContextVar('servlocal')
 MAXLINELEN = 512
 
-import ellinetircd.channel
-import ellinetircd.exceptions
-import ellinetircd.server
-import ellinetircd.sdnotify
-import ellinetircd.states
-import ellinetircd.user
-import ellinetircd.utils
-import ellinetircd.shared
-import ellinetircd.accounts
+from . import channel
+from . import exceptions
+from . import server
+from . import sdnotify
+from . import states
+from . import user
+from . import utils
+from . import shared
+from . import accounts
 
-ellinetircd.utils.install_templates()
+utils.install_templates()
 
 def update_status() -> None:
     sl = servlocal.get()
-    ellinetircd.sdnotify.status(
+    sdnotify.status(
         f"Listening on {cfg.ADDR} ({cfg.HOST}) port {cfg.PORT}. "
         f"Currently {len(sl.users)} registered users"
         f" in {len(sl.channels)} channels."

@@ -11,7 +11,7 @@ import re
 import trio
 import uuid
 import yaml
-from typing import TYPE_CHECKING, List, Optional, Set, Union, Any, overload
+from typing import TYPE_CHECKING, List, Optional, Set, Union, Any
 
 import ellinetircd
 from ellinetircd.config import config as cfg
@@ -19,7 +19,8 @@ from ellinetircd.exceptions import IRCException, Disconnect, BotException
 from ellinetircd.states import PasswordState, ConnectedState, QuitState, AnyState
 import ellinetircd.user
 from ellinetircd.utils import send_system_message, find_user_from_nick
-from ellinetircd.accounts import get_connection, does_user_exist
+from ellinetircd.accounts import get_connection, does_user_exist, add_bot_user
+from ellinetircd.utils import Fuse
 
 if TYPE_CHECKING:
     from ellinetircd.server import ServLocal
@@ -307,7 +308,9 @@ class BotUser(User):
         self._client = trio.SocketStream(client_socket)
         self._closed = False
         self._terminated = False
+        self.has_registered = Fuse()
 
+        self.modes.add("B") # All bots are bots (wow never knew)
         self.modes.add("o") # All bots are operators
         # Bots should also be registered, but that should be done later
  
@@ -343,7 +346,7 @@ class BotUser(User):
         await self._client.send_all(message.rstrip("\r\n").encode("utf-8") + b"\r\n")
  
     async def register(self, nickname: str, realname: str = "ElliNetIRCd Local Server Bot") -> None:
-        if self.nick is None:
+        if not self.has_registered():
             await self.usend(f"NICK {nickname}")
             await self.usend(f"USER {nickname} 0 * :{realname}")
         else:
@@ -443,3 +446,19 @@ class BotUser(User):
             channel = target if target.startswith(("#", "&")) else None
 
             yield user, channel, message
+
+    @User.nick.setter
+    def nick(self, nick: str):
+        if nick is None:
+            self._nick = None
+            return
+        
+        if self.has_registered:
+            raise BotException("Bot already registered, cannot change nick")
+        else:
+            self._nick = nick
+            add_bot_user(self.database_cursor, nick)
+            self.modes.add("r")
+
+    def can_use_nick(self, nick: str) -> bool:
+        return True

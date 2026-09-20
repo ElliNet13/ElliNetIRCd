@@ -24,6 +24,9 @@ async def setup(context: GenericContext):
             async for user, channel, message in bot.messages():
                 if channel:
                     continue
+
+                if "B" in user.modes: # Bots can't use NickServ
+                    continue
                 
                 args = shlex.split(message)
                 match args[0].upper():

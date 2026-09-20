@@ -1,1 +1,1 @@
-usermodes = set("or") # Operator, Registered
+usermodes = set("orB") # Operator, Registered
