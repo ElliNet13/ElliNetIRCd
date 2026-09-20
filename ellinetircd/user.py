@@ -167,6 +167,7 @@ class User:
             else:
                 self.modes.add('o') # they be an operator
                 self._nursery.start_soon(send_system_message, self, "Your nickname has been registered as an operator. You have been given the o mode.")
+                self._nursery.start_soon(send_system_message, self, "For security, it is strongly recommended that you create a account with NickServ.")
         else:
             if "o" in self.modes:
                 self.modes.remove("o")

@@ -7,5 +7,4 @@
 - [ ] Add kicking, banning, etc
 - [ ] Add way to kick people stealing nickname `GHOST <nickname> <password>`
 - [ ] Add bots auto signing up for NickServ with a password shared for all bots specific per server and randomly generated, put in the accounts database.
-- [ ] Remind operators without accounts to create a account.
 - [ ] Make a new state for NickServ not signed in
